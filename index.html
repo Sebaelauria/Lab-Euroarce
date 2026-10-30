@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mi App</title><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#c2410c"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Mi App"><link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{--bg:#f6f5f1;--sf:#fff;--tx:#1d1d1b;--mu:#76746d;--bd:#e3e0d8;--ac:#c2410c;--M:#f59e0b;--T:#0ea5e9;--N:#6366f1;--L:#10b981;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141413;--sf:#1f1e1c;--tx:#f1efe9;--mu:#9b988f;--bd:#33312d;--ac:#fb923c;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#141413;--sf:#1f1e1c;--tx:#f1efe9;--mu:#9b988f;--bd:#33312d;--ac:#fb923c;color-scheme:dark}
+*{box-sizing:border-box}html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--tx);font:16px/1.4 system-ui,-apple-system,sans-serif;display:flex;flex-direction:column}
+main{flex:1;overflow-y:auto;padding:16px 16px 24px}
+h1{font-size:22px;margin:0 0 12px}h2{font-size:15px;margin:18px 0 8px;color:var(--mu);font-weight:600}
+nav{display:flex;border-top:1px solid var(--bd);background:var(--sf)}
+nav button{flex:1;border:0;background:none;color:var(--mu);padding:12px 0;font:600 13px system-ui;display:flex;flex-direction:column;gap:2px;align-items:center}
+nav button.on{color:var(--ac)}nav span{font-size:20px}
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:10px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+button.b{background:var(--ac);color:#fff;border:0;border-radius:10px;padding:11px 14px;font:600 15px system-ui}
+button.g{background:none;border:1px solid var(--bd);color:var(--tx);border-radius:10px;padding:9px 12px;font:600 14px system-ui}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.dh{font-size:11px;color:var(--mu);text-align:center;padding:2px 0}
+.d{aspect-ratio:1/1.1;border-radius:10px;background:var(--sf);border:1px solid var(--bd);display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:4px 0;font-size:14px;color:var(--tx)}
+.d.today{outline:2px solid var(--ac)}.d.e{visibility:hidden}
+.s{width:70%;height:6px;border-radius:3px;background:transparent}.ev{font-size:9px;color:var(--mu)}
+.leg{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--mu);margin:10px 0}
+.dot{display:inline-block;width:10px;height:10px;border-radius:5px;margin-right:4px}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+.opts button{padding:12px;border-radius:10px;border:2px solid var(--bd);background:var(--sf);color:var(--tx);font:600 15px system-ui}
+.opts button.on{border-color:var(--ac)}
+label{display:block;font-size:13px;color:var(--mu);margin-bottom:10px}
+input,textarea{width:100%;font:17px system-ui;padding:10px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx);margin-top:4px}
+.res{font-size:30px;font-weight:700;color:var(--ac);margin:6px 0}
+.f{font-size:12px;color:var(--mu)}
+.back{background:none;border:0;color:var(--ac);font:600 15px system-ui;padding:0 0 10px}
+.sheet{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;z-index:5}
+.sheet>div{background:var(--sf);width:100%;border-radius:18px 18px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px))}
+.h{border-top:1px solid var(--bd);padding:8px 0;font-size:14px}
+</style></head><body>
+<main id="m"></main>
+<nav><button id="t-cal" onclick="go('cal')"><span>📅</span>Calendario</button><button id="t-med" onclick="go('med')"><span>🧪</span>Mediciones</button></nav>
+<script>
+const SH={M:['Mañana','var(--M)'],T:['Tarde','var(--T)'],N:['Noche','var(--N)'],L:['Libre','var(--L)']};
+const T=[432.7,360.3,393.5,329.3,336.1,303.7,306.2,312.2,355.8],MA=['>1000','1000-630','630-500','500-400','400-300','300-200','200-100','100-75','<75'];
+const avg=a=>{a=a.filter(x=>isFinite(x));return a.length?a.reduce((p,c)=>p+c)/a.length:NaN};
+const CALCS=[
+{id:'dar',n:'Densidad aparente – redondas',u:'g/cc',dec:3,f:[['m','Masa (g)'],['d','Diámetro (mm)'],['h1','Altura med. 1 (mm)'],['h2','Altura med. 2 (mm)'],['h3','Altura med. 3 (mm)'],['h4','Altura med. 4 (mm)'],['H','Humedad (%)']],fo:'Vol = π·d²/4·h̄ · Dap = m / Vol · Dap seco = Dap / (1 + H/100)',c:v=>{const h=avg([v.h1,v.h2,v.h3,v.h4]),V=Math.PI*v.d*v.d/4*h/1000,D=v.m/V;return{r:D,ex:['Altura promedio: '+fmt(h)+' mm','Volumen: '+fmt(V,3)+' cc'].concat(isFinite(v.H)?['D. aparente seco: '+fmt(D/(1+v.H/100),3)+' g/cc']:[])}}},
+{id:'dre',n:'Densidad aparente – rectangulares',u:'g/cc',dec:3,f:[['m','Masa (g)'],['l','Lado corto (mm)'],['a','Lado largo (mm)'],['h1','Altura med. 1 (mm)'],['h2','Altura med. 2 (mm)'],['h3','Altura med. 3 (mm)'],['h4','Altura med. 4 (mm)'],['H','Humedad (%)']],fo:'Vol = corto·largo·h̄ · Dap = m / Vol · Dap seco = Dap / (1 + H/100)',c:v=>{const h=avg([v.h1,v.h2,v.h3,v.h4]),V=v.l*v.a*h/1000,D=v.m/V;return{r:D,ex:['Altura promedio: '+fmt(h)+' mm','Volumen: '+fmt(V,3)+' cc'].concat(isFinite(v.H)?['D. aparente seco: '+fmt(D/(1+v.H/100),3)+' g/cc']:[])}}},
+{id:'abs',n:'Absorción de agua',u:'%',f:[['di','Peso inicial – húmedo, Di (g)'],['df','Peso final – seco, Df (g)']],fo:'Abs = (Di − Df) / Df · 100',c:v=>(v.di-v.df)/v.df*100},
+{id:'gra',n:'Granulometría',u:'% retenido total',f:[['M','Muestra (g)',200]].concat(MA.map((m,i)=>['t'+i,'Tamiz + muestra '+m+' µm (g)'])),fo:'% malla = (Tamiz+g − Tara tamiz) / Muestra · 100',c:v=>{let s=0;const ex=[];MA.forEach((m,i)=>{const p=(v['t'+i]-T[i])/v.M*100;if(isFinite(p)){s+=p;ex.push(m+': '+fmt(p)+' %')}});return{r:ex.length?s:NaN,ex:ex.length?ex.concat(['Finos/pérdida: '+fmt(100-s)+' %']):[]}}},
+{id:'mec',n:'Resistencia mecánica (media de 4 piezas)',u:'MPa (media)',f:[['L','Distancia entre apoyos (mm)'],['b','Ancho (mm)'],['e1','Espesor pieza 1 (mm)'],['F1','Fuerza pieza 1 (N)'],['e2','Espesor pieza 2 (mm)'],['F2','Fuerza pieza 2 (N)'],['e3','Espesor pieza 3 (mm)'],['F3','Fuerza pieza 3 (N)'],['e4','Espesor pieza 4 (mm)'],['F4','Fuerza pieza 4 (N)']],fo:'σ = 3·F·L / (2·b·e²) por pieza · media y desv. estándar',c:v=>{const r=[1,2,3,4].map(i=>3*v['F'+i]*v.L/(2*v.b*v['e'+i]*v['e'+i])),ok=r.filter(isFinite),n=ok.length;if(!n)return NaN;const m=ok.reduce((p,c)=>p+c)/n,sd=n>1?Math.sqrt(ok.reduce((p,c)=>p+(c-m)*(c-m),0)/(n-1)):NaN;return{r:m,ex:r.map((x,i)=>'Pieza '+(i+1)+': '+fmt(x)+' MPa').concat(['Desv. estándar: '+fmt(sd)])}}},
+{id:'con',n:'Contracción lineal',u:'%',f:[['l0','Longitud inicial (mm)'],['lf','Longitud final (mm)']],fo:'CL = (L0 − Lf) / L0 · 100',c:v=>(v.l0-v.lf)/v.l0*100},
+{id:'rec',n:'Rechazo de barbotina',u:'% rechazo',f:[['V','Volumen barbotina (mL)',100],['g','Gramos barbotina (g)'],['pr','Peso rechazo (g)'],['cs','% sólidos (vacío = calcular)']],fo:'ρ = g / V · %CS = 156,33 − 154,6/ρ · Gr. secos = g · %CS / 100 · %Rechazo = rechazo / gr. secos · 100',c:v=>{const d=v.g/v.V,cs=isFinite(v.cs)?v.cs:156.33-154.6/d,gs=v.g*cs/100;return{r:v.pr/gs*100,ex:['Densidad: '+fmt(d)+' g/cc','% C.S: '+fmt(cs)+' %','Gramos secos: '+fmt(gs)+' g','Corrector: '+fmt(gs/100)]}}},
+{id:'ata',n:'Densidad atomizado',u:'g/cc',dec:3,f:[['a','Peso LBG (g)'],['b','Peso atomizado + LBG (g)'],['V','Volumen (cc)',500]],fo:'Dap = (Peso atom+LBG − Peso LBG) / V',c:v=>(v.b-v.a)/v.V},
+{id:'hum',n:'Humedad (agua a agregar)',u:'ml',f:[['hi','% Humedad inicial'],['hf','% Humedad final'],['p','Peso inicial atomizado (g)']],fo:'Agua = Peso inicial · (%Hf − %Hi) / 100',c:v=>{const a=v.p*(v.hf-v.hi)/100;return{r:a,ex:['Peso final atomizado: '+fmt(v.p+a)+' g']}}}
+];
+let MSG='',S={days:{},ev:{},hist:{}},tab='cal',cur=new Date(),calc=null;
+try{S=Object.assign(S,JSON.parse(localStorage.getItem('app')||'{}'))}catch(e){}
+const save=()=>{try{localStorage.setItem('app',JSON.stringify(S))}catch(e){}};
+const fmt=(n,d)=>isFinite(n)?(d?n.toFixed(d):(Math.round(n*1000)/1000).toString()).replace('.',','):'—';
+const key=(y,m,d)=>y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+function go(t){tab=t;calc=null;render()}
+function render(){
+ ['cal','med'].forEach(x=>document.getElementById('t-'+x).classList.toggle('on',x===tab));
+ const m=document.getElementById('m');m.innerHTML=tab==='cal'?calHTML():(calc?calcHTML():medHTML());m.scrollTop=0;if(calc&&tab==='med')upd()}
+function calHTML(){
+ const y=cur.getFullYear(),mo=cur.getMonth(),first=(new Date(y,mo,1).getDay()+6)%7,n=new Date(y,mo+1,0).getDate(),td=new Date();
+ const name=new Date(y,mo,1).toLocaleDateString('es',{month:'long',year:'numeric'});
+ let g='';['L','M','X','J','V','S','D'].forEach(x=>g+='<div class="dh">'+x+'</div>');
+ for(let i=0;i<first;i++)g+='<div class="d e"></div>';
+ for(let d=1;d<=n;d++){const k=key(y,mo,d),s=S.days[k],ev=(S.ev[k]||[]).length;
+  g+=`<button class="d ${td.getFullYear()==y&&td.getMonth()==mo&&td.getDate()==d?'today':''}" onclick="editDay('${k}')"><b style="font-weight:600">${d}</b><i class="s" style="background:${s&&s.s?SH[s.s][1]:'transparent'}"></i><span class="ev">${ev?'● '+ev:(s&&s.note?'✎':'&nbsp;')}</span></button>`}
+ return `<h1>Calendario</h1><div class="row" style="margin-bottom:10px"><button class="g" onclick="mv(-1)">‹</button><b style="text-transform:capitalize">${name}</b><button class="g" onclick="mv(1)">›</button></div><div class="grid">${g}</div>
+ <div class="leg">${Object.values(SH).map(v=>`<span><i class="dot" style="background:${v[1]}"></i>${v[0]}</span>`).join('')}</div>
+ <div class="card"><b>Sincronizar con Shifter</b><p class="f" style="margin:6px 0 10px">En Shifter exportá tu calendario como archivo .ics y cargalo acá. Los turnos aparecen como eventos en cada día.</p><div class="row"><label style="display:inline-block;margin:0;position:relative;overflow:hidden;background:var(--ac);color:#fff;border-radius:10px;padding:11px 14px;font:600 15px system-ui">Importar .ics<input type="file" id="ics" onchange="imp(this)" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;margin:0;padding:0;border:0"></label><button class="g" onclick="S.ev={};MSG='';save();render()">Borrar importados</button></div><div class="f" style="margin-top:8px">${MSG}</div></div>`}
+function mv(i){cur=new Date(cur.getFullYear(),cur.getMonth()+i,1);render()}
+function imp(el){const f=el.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{
+ const t=r.result.replace(/\r?\n[ \t]/g,'');let c=0;
+ t.split('BEGIN:VEVENT').slice(1).forEach(b=>{const d=(b.match(/DTSTART[^:\n]*:(\d{4})(\d{2})(\d{2})/)||[]),s=(b.match(/SUMMARY[^:\n]*:(.*)/)||[])[1];
+  if(d[1]&&s){const k=d[1]+'-'+d[2]+'-'+d[3];(S.ev[k]=S.ev[k]||[]).push(s.trim());c++}});
+ MSG=c?c+' eventos importados':'No encontré eventos en ese archivo';save();render()};r.onerror=()=>{MSG='No pude leer el archivo';render()};r.readAsText(f)}
+function editDay(k){const s=S.days[k]||{},ev=S.ev[k]||[];
+ const o=document.createElement('div');o.className='sheet';o.onclick=e=>{if(e.target===o)o.remove()};
+ o.innerHTML=`<div><b>${k.split('-').reverse().join('/')}</b>${ev.length?'<p class="f">Shifter: '+ev.join(' · ')+'</p>':''}<div class="opts">${Object.entries(SH).map(([c,v])=>`<button data-c="${c}" class="${s.s===c?'on':''}" style="border-left:8px solid ${v[1]}">${v[0]}</button>`).join('')}</div><label>Nota<textarea rows="2" id="nt">${s.note||''}</textarea></label><div class="row"><button class="g" id="cl">Limpiar</button><button class="b" id="ok">Guardar</button></div></div>`;
+ document.body.appendChild(o);let sel=s.s;
+ o.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{sel=b.dataset.c;o.querySelectorAll('[data-c]').forEach(x=>x.classList.toggle('on',x===b))});
+ o.querySelector('#cl').onclick=()=>{delete S.days[k];save();o.remove();render()};
+ o.querySelector('#ok').onclick=()=>{S.days[k]={s:sel,note:o.querySelector('#nt').value};save();o.remove();render()}}
+function medHTML(){return `<h1>Mediciones</h1>`+CALCS.map(c=>`<button class="card row" style="width:100%;text-align:left;color:var(--tx);font:600 16px system-ui" onclick="open_('${c.id}')"><span>${c.n}<br><span class="f" style="font-weight:400">${(S.hist[c.id]||[]).length} registros</span></span><span style="color:var(--mu)">›</span></button>`).join('')}
+function open_(id){calc=CALCS.find(c=>c.id===id);render()}
+function vals(){const v={};calc.f.forEach(([k])=>v[k]=parseFloat(String(document.getElementById('i-'+k).value).replace(',','.')));return v}
+function calcHTML(){const h=S.hist[calc.id]||[];
+ return `<button class="back" onclick="go('med')">‹ Mediciones</button><h1>${calc.n}</h1><div class="card">${calc.f.map(([k,l,d])=>`<label>${l}<input id="i-${k}" inputmode="decimal" oninput="upd()" value="${d!==undefined?String(d).replace('.',','):''}"></label>`).join('')}<div class="f">${calc.fo}</div><div class="res" id="rs">—</div><div class="f" id="ex"></div><div class="row" style="margin-top:10px"><button class="g" onclick="render()">Limpiar</button><button class="b" onclick="sv()">Guardar</button></div></div><h2>Historial</h2>${h.length?h.slice().reverse().slice(0,30).map(x=>`<div class="h"><b>${fmt(x.r,calc.dec)} ${calc.u}</b> <span class="f">· ${x.d}</span>${(x.ex||[]).length?'<br><span class="f">'+x.ex.join(' · ')+'</span>':''}</div>`).join(''):'<p class="f">Sin registros todavía.</p>'}`}
+const R=x=>typeof x==='number'?{r:x,ex:[]}:x;
+function upd(){const o=R(calc.c(vals()));document.getElementById('rs').textContent=isFinite(o.r)?fmt(o.r,calc.dec)+' '+calc.u:'—';document.getElementById('ex').innerHTML=o.ex.join('<br>')}
+function sv(){const o=R(calc.c(vals())),r=o.r;if(!isFinite(r))return;(S.hist[calc.id]=S.hist[calc.id]||[]).push({r,ex:o.ex,d:new Date().toLocaleString('es',{dateStyle:'short',timeStyle:'short'})});save();render()}
+render();
+</script><script>if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));</script></body></html>
