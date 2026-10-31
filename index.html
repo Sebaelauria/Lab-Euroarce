@@ -59,11 +59,11 @@ input,textarea{width:100%;font:17px system-ui;padding:10px;border:1px solid var(
 .mc i{width:46px;height:46px;border-radius:15px;background:#ecfdf3;display:grid;place-items:center;font-style:normal;font-size:23px}
 .mc b{font:600 15px/1.25 system-ui}.mc .f{color:var(--ac);font-weight:600}
 h1{letter-spacing:-.3px}
-</style></head><body>
+.sheet>div{max-height:88vh;overflow-y:auto}.tk{display:flex;gap:10px;align-items:center;color:var(--tx);font-size:15px;margin:0 0 8px}</style></head><body>
 <main id="m"></main>
 <nav><button id="t-med" onclick="go('med')"><span>🧪</span>Mediciones</button><button id="t-cal" onclick="go('cal')"><span>📅</span>Calendario</button></nav>
 <script>
-const SH={M:['Mañana','var(--M)'],T:['Tarde','var(--T)'],N:['Noche','var(--N)'],L:['Libre','var(--L)']};
+const SH={M:['Mañana','var(--M)'],T:['Tarde','var(--T)'],N:['Noche','var(--N)'],L:['Libre','var(--L)'],P:['Partida','var(--P,#db2777)']};
 function st4(v){const a=[v.a1,v.a2,v.a3,v.a4].filter(isFinite),n=a.length;if(!n)return NaN;const m=a.reduce((p,c)=>p+c)/n,sd=n>1?Math.sqrt(a.reduce((p,c)=>p+(c-m)*(c-m),0)/(n-1)):NaN;return{r:m,ex:['Desv. std: '+fmt(sd,2),n+' piezas']}}
 const T=[432.7,360.3,393.5,329.3,336.1,303.7,306.2,312.2,355.8],MA=['>1000','1000-630','630-500','500-400','400-300','300-200','200-100','100-75','<75'];
 const avg=a=>{a=a.filter(x=>isFinite(x));return a.length?a.reduce((p,c)=>p+c)/a.length:NaN};
@@ -98,9 +98,10 @@ function calHTML(){
   g+=`<button class="d ${td.getFullYear()==y&&td.getMonth()==mo&&td.getDate()==d?'today':''}" style="${sc?'background:'+SH[sc][1]+';color:#fff;border-color:transparent':''}" onclick="editDay('${k}')"><b style="font-weight:600">${d}</b><span class="ev" style="color:inherit;font-size:10px">${sc?SH[sc][0]:'&nbsp;'}${s&&s.note?' ✎':''}</span></button>`}
  return `<h1>Calendario</h1><div class="row" style="margin-bottom:10px"><button class="g" onclick="mv(-1)">‹</button><b style="text-transform:capitalize">${name}</b><button class="g" onclick="mv(1)">›</button></div><div class="grid">${g}</div>
  <div class="leg">${Object.values(SH).map(v=>`<span><i class="dot" style="background:${v[1]}"></i>${v[0]}</span>`).join('')}</div>
- <div class="card"><b>Sincronizar con Shifter</b><p class="f" style="margin:6px 0 10px">En Shifter exportá tu calendario como archivo .ics y cargalo acá. Los turnos aparecen como eventos en cada día.</p><div class="row"><label style="display:inline-block;margin:0;position:relative;overflow:hidden;background:var(--ac);color:#fff;border-radius:10px;padding:11px 14px;font:600 15px system-ui">Importar .ics<input type="file" id="ics" onchange="imp(this)" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;margin:0;padding:0;border:0"></label><button class="g" onclick="S.ev={};S.sh={};MSG='';save();render()">Borrar importados</button></div><div class="f" style="margin-top:8px">${MSG}</div></div>`}
+ ${taskCard()}<div class="card"><b>Sincronizar con Shifter</b><p class="f" style="margin:6px 0 10px">En Shifter exportá tu calendario como archivo .ics y cargalo acá. Los turnos aparecen como eventos en cada día.</p><div class="row"><label style="display:inline-block;margin:0;position:relative;overflow:hidden;background:var(--ac);color:#fff;border-radius:10px;padding:11px 14px;font:600 15px system-ui">Importar .ics<input type="file" id="ics" onchange="imp(this)" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;margin:0;padding:0;border:0"></label><button class="g" onclick="S.ev={};S.sh={};MSG='';save();render()">Borrar importados</button></div><div class="f" style="margin-top:8px">${MSG}</div></div>`}
 function mv(i){cur=new Date(cur.getFullYear(),cur.getMonth()+i,1);render()}
 function shiftOf(s,h){const t=s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+ if(/partid|split/.test(t))return'P';
  if(/libre|descanso|off|franco|vacac|rest/.test(t))return'L';
  if(/noche|night|nocturn|\bn\b/.test(t))return'N';
  if(/tarde|afternoon|vespert|\bt\b/.test(t))return'T';
@@ -108,15 +109,34 @@ function shiftOf(s,h){const t=s.toLowerCase().normalize('NFD').replace(/[\u0300-
  if(h!==undefined&&h!==''){h=+h;return h>=5&&h<12?'M':h>=12&&h<20?'T':'N'}
  return null}
 function imp(el){const f=el.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{
- const t=r.result.replace(/\r?\n[ \t]/g,'');let c=0;const NI=new Set();
+ const t=r.result.replace(/\r?\n[ \t]/g,'');const NI=new Set(),days={};
  t.split('BEGIN:VEVENT').slice(1).forEach(b=>{const d=(b.match(/DTSTART[^:\n]*:(\d{4})(\d{2})(\d{2})(?:T(\d{2}))?/)||[]),s=(b.match(/SUMMARY[^:\n]*:(.*)/)||[])[1];
-  if(d[1]&&s){const k=d[1]+'-'+d[2]+'-'+d[3],sc=shiftOf(s,d[4]);(S.ev[k]=S.ev[k]||[]).push(s.trim());if(sc){(S.sh=S.sh||{})[k]=sc;c++}else NI.add(s.trim())}});
- MSG=(c?c+' turnos identificados':'No identifiqué turnos')+(NI.size?'. Sin identificar: '+[...NI].slice(0,6).join(', '):'');save();render()};r.onerror=()=>{MSG='No pude leer el archivo';render()};r.readAsText(f)}
-function editDay(k){const s=S.days[k]||{},ev=S.ev[k]||[];
+  if(d[1]&&s){const k=d[1]+'-'+d[2]+'-'+d[3],v=(days[k]=days[k]||{t:[],c:[],seen:new Set()}),id=s.trim()+'|'+(d[4]||'');if(v.seen.has(id))return;v.seen.add(id);v.t.push(s.trim());const sc=shiftOf(s,d[4]);if(sc)v.c.push(sc);else NI.add(s.trim())}});
+ let c=0,pt=0;S.sh=S.sh||{};
+ Object.entries(days).forEach(([k,v])=>{S.ev[k]=v.t;if(v.t.length>=2){S.sh[k]='P';pt++;c++}else if(v.c[0]){S.sh[k]=v.c[0];c++}});
+ MSG=(c?c+' días con turno identificado'+(pt?' ('+pt+' de jornada partida)':''):'No identifiqué turnos')+(NI.size?'. Sin identificar: '+[...NI].slice(0,6).join(', '):'');save();render()};r.onerror=()=>{MSG='No pude leer el archivo';render()};r.readAsText(f)}
+const DAYS=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+const PLAN0={1:{M:['TOC Atomizado'],T:['Preparar valija','Lavar arcillas']},2:{M:['TOC Molino'],T:['Cocer arcillas']},3:{M:['TOC Atomizado'],T:['Preparar valija']},4:{M:['^Gradiente hornos'],T:[]},5:{M:[],T:['Pasar TOCS']},6:{M:['TOC Atomizado'],T:['Vaciar silos']},0:{M:['Secar tolvas'],T:['Preparar valija','Pesar tolva','Vaciar cubos']}};
+let SD=null;const tk=()=>{const t=new Date();return key(t.getFullYear(),t.getMonth(),t.getDate())};
+function tasksFor(k,sc0){const [y,m,d]=k.split('-').map(Number),wd=new Date(y,m-1,d).getDay(),sc=sc0!==undefined?sc0:(((S.days[k]||{}).s)||(S.sh||{})[k]),p=(S.plan||PLAN0)[wd]||{},out=[];
+ (sc==='M'?['M']:sc==='T'?['T']:sc==='P'?['M','T']:[]).forEach(c=>(p[c]||[]).forEach(t=>{const w=t[0]==='^';if(w&&d>7)return;out.push({id:c+':'+t,txt:w?t.slice(1)+' (1.ª semana del mes)':t})}));return{sc,out}}
+function tg(k,id,v){id=decodeURIComponent(id);const D=(S.done=S.done||{});D[k]=D[k]||{};if(v)D[k][id]=1;else delete D[k][id];save()}
+function tasksHTML(k,sc0){const r=tasksFor(k,sc0);if(!['M','T','P'].includes(r.sc))return '<p class="f">'+(r.sc?'Este turno no tiene tareas.':'Asigná un turno a este día para ver sus tareas.')+'</p>';
+ if(!r.out.length)return '<p class="f">No hay tareas para este día y turno.</p>';const D=(S.done||{})[k]||{};
+ return r.out.map(x=>`<label class="tk"><input type="checkbox" style="width:22px;height:22px;margin:0;padding:0;flex:none" ${D[x.id]?'checked':''} onchange="tg('${k}','${encodeURIComponent(x.id)}',this.checked)"><span>${x.txt}</span></label>`).join('')}
+function taskCard(){const k=SD||tk(),[y,m,d]=k.split('-').map(Number),r=tasksFor(k);
+ return `<div class="card"><div class="row" style="margin-bottom:8px"><b>Tareas · ${DAYS[new Date(y,m-1,d).getDay()]} ${d}/${m}${r.sc?' · '+SH[r.sc][0]:''}</b><button class="g" onclick="planEd()">Cronograma</button></div>${tasksHTML(k)}</div>`}
+function planEd(){const o=document.createElement('div');o.className='sheet';o.onclick=e=>{if(e.target===o)o.remove()};
+ const P=S.plan||PLAN0;
+ o.innerHTML=`<div><b>Cronograma semanal</b><p class="f">Una tarea por línea. Empezá la línea con ^ para que solo salga en la 1.ª semana del mes.</p>${[1,2,3,4,5,6,0].map(w=>`<b style="font-size:14px">${DAYS[w]}</b><label>Mañana<textarea rows="2" data-w="${w}" data-s="M">${((P[w]||{}).M||[]).join('\n')}</textarea></label><label>Tarde<textarea rows="2" data-w="${w}" data-s="T">${((P[w]||{}).T||[]).join('\n')}</textarea></label>`).join('')}<div class="row"><button class="g" id="pr">Restaurar</button><button class="b" id="pk">Guardar</button></div></div>`;
+ document.body.appendChild(o);
+ o.querySelector('#pr').onclick=()=>{delete S.plan;save();o.remove();render()};
+ o.querySelector('#pk').onclick=()=>{const np={};o.querySelectorAll('textarea').forEach(t=>{(np[t.dataset.w]=np[t.dataset.w]||{M:[],T:[]})[t.dataset.s]=t.value.split('\n').map(x=>x.trim()).filter(Boolean)});S.plan=np;save();o.remove();render()}}
+function editDay(k){SD=k;const s=S.days[k]||{},ev=S.ev[k]||[];
  const o=document.createElement('div');o.className='sheet';o.onclick=e=>{if(e.target===o)o.remove()};
- o.innerHTML=`<div><b>${k.split('-').reverse().join('/')}</b>${ev.length?'<p class="f">Shifter: '+ev.join(' · ')+'</p>':''}<div class="opts">${Object.entries(SH).map(([c,v])=>`<button data-c="${c}" class="${s.s===c?'on':''}" style="border-left:8px solid ${v[1]}">${v[0]}</button>`).join('')}</div><label>Nota<textarea rows="2" id="nt">${s.note||''}</textarea></label><div class="row"><button class="g" id="cl">Limpiar</button><button class="b" id="ok">Guardar</button></div></div>`;
- document.body.appendChild(o);let sel=s.s;
- o.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{sel=b.dataset.c;o.querySelectorAll('[data-c]').forEach(x=>x.classList.toggle('on',x===b))});
+ o.innerHTML=`<div><b>${k.split('-').reverse().join('/')}</b>${ev.length?'<p class="f">Shifter: '+ev.join(' · ')+'</p>':''}<div class="opts">${Object.entries(SH).map(([c,v])=>`<button data-c="${c}" class="${(s.s||(S.sh||{})[k])===c?'on':''}" style="border-left:8px solid ${v[1]}">${v[0]}</button>`).join('')}</div><div id="tkl"></div><label>Nota<textarea rows="2" id="nt">${s.note||''}</textarea></label><div class="row"><button class="g" id="cl">Limpiar</button><button class="b" id="ok">Guardar</button></div></div>`;
+ document.body.appendChild(o);let sel=s.s||(S.sh||{})[k];const pt=()=>{o.querySelector('#tkl').innerHTML=tasksHTML(k,sel)};pt();
+ o.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{sel=b.dataset.c;pt();o.querySelectorAll('[data-c]').forEach(x=>x.classList.toggle('on',x===b))});
  o.querySelector('#cl').onclick=()=>{delete S.days[k];save();o.remove();render()};
  o.querySelector('#ok').onclick=()=>{S.days[k]={s:sel,note:o.querySelector('#nt').value};save();o.remove();render()}}
 function medHTML(){const IC={'dar': '⚪', 'dre': '⬜', 'abs': '💧', 'gra': '🔬', 'mec': '🔨', 'con': '📏', 'rec': '🧪', 'ata': '🌫️', 'hum': '💦'};return `<h1>Mediciones</h1><div class="mg">`+CALCS.map(c=>{const n=(S.hist[c.id]||[]).length;return `<button class="mc" onclick="open_('${c.id}')"><i>${IC[c.id]||'🧪'}</i><b>${c.n}</b><span class="f">${n} ${n===1?'registro':'registros'}</span></button>`}).join('')+`</div>`}
@@ -130,8 +150,8 @@ function tblHTML(){const h=S.hist[calc.id]||[];
  return `<button class="back" onclick="back()">‹ Mediciones</button><h1>${calc.n}</h1><div class="card"><div class="f">${calc.fo}</div><table style="width:100%;border-collapse:collapse;margin-top:8px"><tr class="f"><td>#</td><td>${calc.tbl[0]}</td><td>${calc.tbl[1]}</td><td style="text-align:right"><b>Resultado</b></td></tr>${TB.map((r,i)=>`<tr><td class="f">${i+1}</td><td><input inputmode="decimal" value="${r[0]}" oninput="tbs(${i},0,this.value)" style="margin:2px 4px 2px 0;padding:8px"></td><td><input inputmode="decimal" value="${r[1]}" oninput="tbs(${i},1,this.value)" style="margin:2px 4px 2px 0;padding:8px"></td><td id="r${i}" class="gv" style="text-align:right;white-space:nowrap">—</td></tr>`).join('')}</table><div class="row" style="margin:10px 0">${calc.rows?'':`<button class="g" onclick="TB.push(['','']);render()">+ Pieza</button>`}<button class="g" onclick="tbInit();render()">Limpiar</button></div><div class="f" id="rs" style="display:none"></div><div class="f" id="ex"></div><div style="margin-top:10px"><button class="b" onclick="sv()">Guardar</button></div></div><h2>Historial</h2>${h.length?h.slice().reverse().slice(0,30).map(x=>hi(x)).join(''):'<p class="f">Sin registros todavía.</p>'}`}
 let DU=[],AU=[],REF=['','','',''],CB=0;const duInit=()=>{DU=Array.from({length:12},()=>['','','','']);AU=Array.from({length:12},()=>[false,false,false,false]);REF=['','','',''];CB=0};
 function stat(a){a=a.map(pf).filter(isFinite);const n=a.length;if(!n)return null;const m=a.reduce((p,c)=>p+c)/n;return{m,sd:n>1?Math.sqrt(a.reduce((p,c)=>p+(c-m)*(c-m),0)/(n-1)):NaN,n}}
-function duSum(){const ex=[];let r=NaN;for(let b=0;b<4;b++){const s=[0,1,2].map(c=>stat(DU[b*3+c]));if(!s.some(Boolean))continue;const f=(x,u,d)=>x?fmt(x.m,2)+' '+u+(d&&isFinite(x.sd)?' (desv. '+fmt(x.sd,2)+')':''):'—';ex.push('Cuadro '+(b+1)+(REF[b]?' · '+REF[b]:'')+': altura '+f(s[0],'mm')+' · fuerza '+f(s[1],'kgf',1)+' · R. mec '+f(s[2],'MPa',1));if(!isFinite(r))r=(s[2]||s[1]||s[0]).m}return ex.length?{r,ex}:NaN}
-function duUpd(){if(calc&&calc.duo){(S.dr=S.dr||{})[calc.id]={DU:DU,REF:REF,AU:AU};save()}DU.forEach((a,g)=>{const x=stat(a),e=document.getElementById('du'+g);if(e)e.innerHTML=x?'<b>'+fmt(x.m,2)+'</b>'+(g%3?' <span>±'+fmt(x.sd,2)+'</span>':''):'—'})}
+function duSum(){const ex=[];let r=NaN;for(let b=0;b<4;b++){const s=[0,1,2].map(c=>stat(DU[b*3+c]));if(!s.some(Boolean))continue;const f=(x,u,d)=>x?fmt(x.m,u==='mm'?1:2)+' '+u+(d&&isFinite(x.sd)?' (desv. '+fmt(x.sd,2)+')':''):'—';ex.push('Cuadro '+(b+1)+(REF[b]?' · '+REF[b]:'')+': altura '+f(s[0],'mm')+' · fuerza '+f(s[1],'kgf',1)+' · R. mec '+f(s[2],'MPa',1));if(!isFinite(r))r=(s[2]||s[1]||s[0]).m}return ex.length?{r,ex}:NaN}
+function duUpd(){if(calc&&calc.duo){(S.dr=S.dr||{})[calc.id]={DU:DU,REF:REF,AU:AU};save()}DU.forEach((a,g)=>{const x=stat(a),e=document.getElementById('du'+g);if(e)e.innerHTML=x?'<b>'+fmt(x.m,g%3?2:1)+'</b>'+(g%3?' <span>±'+fmt(x.sd,2)+'</span>':''):'—'})}
 const KR=34.323275;
 function autoC(b,i){const gs=[b*3,b*3+1,b*3+2];
  gs.forEach(g=>{if(AU[g][i]){DU[g][i]='';AU[g][i]=false}});
@@ -216,7 +236,7 @@ const mm=l=>l[0]==='>'?'mayor a '+l.slice(1):l[0]==='<'?'menor a '+l.slice(1):l.
 const lab=k=>{if(calc.id==='gra'&&/^t\d$/.test(k)){const i=+k[1];return 'Tamiz '+(i+1)+', '+mm(MA[i])+' micrones'}return calc.f.find(x=>x[0]===k)[1].replace(/\s*\(.*?\)/g,'')};
 function resText(){if(tab!=='med'||!calc)return null;
  if(calc.id==='gra'){const o=R(calc.c(vals())),a=o.rows.filter(x=>isFinite(x[1])).map(x=>'Tamiz '+(x[2]+1)+', '+mm(x[0])+': '+spk(fmt(x[1],2))+' por ciento');return a.length?a.join('. ')+'. Total retenido '+spk(fmt(o.r,2))+' por ciento.':null}
- if(calc.duo){const a=[];for(let b=0;b<4;b++){const q=[0,1,2].map(c=>stat(DU[b*3+c]));if(!q.some(Boolean))continue;const f=(n,x,d)=>x?n+' media '+spk(fmt(x.m,2))+(d&&isFinite(x.sd)?', desviación estándar '+spk(fmt(x.sd,2)):''):'';a.push('Cuadro '+(b+1)+(REF[b]?', '+REF[b]:'')+': '+[f('altura',q[0]),f('fuerza',q[1],1),f('R mec',q[2],1)].filter(Boolean).join('; '))}return a.length?a.join('. ')+'.':null}
+ if(calc.duo){const a=[];for(let b=0;b<4;b++){const q=[0,1,2].map(c=>stat(DU[b*3+c]));if(!q.some(Boolean))continue;const f=(n,x,d)=>x?n+' media '+spk(fmt(x.m,n==='altura'?1:2))+(d&&isFinite(x.sd)?', desviación estándar '+spk(fmt(x.sd,2)):''):'';a.push('Cuadro '+(b+1)+(REF[b]?', '+REF[b]:'')+': '+[f('altura',q[0]),f('fuerza',q[1],1),f('R mec',q[2],1)].filter(Boolean).join('; '))}return a.length?a.join('. ')+'.':null}
  if(calc.tbl){const a=tvals().map((x,i)=>isFinite(x)?'Pieza '+(i+1)+': '+spk(fmt(x,2))+' por ciento':null).filter(Boolean);return a.length?a.join('. ')+'.':null}
  const r=$('rs');if(!r||r.textContent==='—')return null;const ex=$('ex').innerText.trim().replace(/\n+/g,'. ');return 'El resultado es '+spk(r.textContent)+'.'+(ex?' '+spk(ex)+'.':'')}
 /* ---------- carga de valores ---------- */
@@ -303,6 +323,7 @@ function handle(raw){setSt('thinking');$('vt').textContent=raw;const t=norm(raw)
  if(!nums.length&&/\b(listo|termine|ya esta|eso es todo|ya termine)\b/.test(t)){if(tab==='med'&&calc&&calc.tbl&&TC===0&&!calc.rowwise&&TB.some(r=>r[0]!=='')){TC=1;const nr=nrow(1);if(nr>=0){say('Ahora '+tcn()+'. Pieza '+(nr+1)+'.');return}}read();return}
  if(/deshac|anterior|volve|atras/.test(t)&&!nums.length){const f=UN.pop();if(f){f();say('Listo, volví al valor anterior.')}else say('No hay nada que deshacer.');return}
  if(/repet/.test(t)){if(/calcul|resultado|cuenta/.test(t))read();else say(last||'Todavía no dije nada.');return}
+ if(/\btareas?\b|que tengo hoy|que hay que hacer/.test(t)&&!nums.length){const W7=['domingo','lunes','martes','miercoles','jueves','viernes','sabado'],q=W7.findIndex(x=>t.includes(x));const d=new Date();if(q>=0)d.setDate(d.getDate()+((q-d.getDay()+7)%7));const r=tasksFor(key(d.getFullYear(),d.getMonth(),d.getDate())),nm=q>=0?W7[q]:'hoy';say(['M','T','P'].includes(r.sc)?(r.out.length?'Tareas de '+nm+', turno '+SH[r.sc][0].toLowerCase()+': '+r.out.map(x=>x.txt).join('; ')+'.':'No hay tareas para '+nm+' en ese turno.'):'No tenés un turno con tareas asignado para '+nm+'.');return}
  if(/explic|formula|como se calcula/.test(t)){if(tab!=='med'||!calc)say('Abrí primero una medición.');else say(calc.fo?'La fórmula es: '+spk(calc.fo)+'.':'No tengo la fórmula cargada para esta medición.');return}
  if(/guard/.test(t)){if(tab!=='med'||!calc){say('No hay ninguna medición abierta para guardar.');return}const h=(S.hist[calc.id]||[]).length;sv();say((S.hist[calc.id]||[]).length>h?'Guardado en el historial.':'No hay un resultado para guardar todavía.');return}
  if(/limpi|reinici|borra(r)? todo|empeza de nuevo/.test(t)){if(tab!=='med'||!calc){say('No hay nada abierto para limpiar.');return}
