@@ -59,7 +59,7 @@ input,textarea{width:100%;font:17px system-ui;padding:10px;border:1px solid var(
 .mc i{width:46px;height:46px;border-radius:15px;background:#ecfdf3;display:grid;place-items:center;font-style:normal;font-size:23px}
 .mc b{font:600 15px/1.25 system-ui}.mc .f{color:var(--ac);font-weight:600}
 h1{letter-spacing:-.3px}
-.sheet>div{max-height:88vh;overflow-y:auto}.tk{display:flex;gap:10px;align-items:center;color:var(--tx);font-size:15px;margin:0 0 8px}</style></head><body>
+.sheet>div{max-height:88vh;overflow-y:auto}.tk{display:flex;gap:10px;align-items:center;color:var(--tx);font-size:15px;margin:0 0 8px}.grid{touch-action:pan-y}</style></head><body>
 <main id="m"></main>
 <nav><button id="t-med" onclick="go('med')"><span>🧪</span>Mediciones</button><button id="t-cal" onclick="go('cal')"><span>📅</span>Calendario</button></nav>
 <script>
@@ -98,7 +98,7 @@ function calHTML(){
   g+=`<button class="d ${td.getFullYear()==y&&td.getMonth()==mo&&td.getDate()==d?'today':''}" style="${sc?'background:'+SH[sc][1]+';color:#fff;border-color:transparent':''}" onclick="editDay('${k}')"><b style="font-weight:600">${d}</b><span class="ev" style="color:inherit;font-size:10px">${sc?SH[sc][0]:'&nbsp;'}${s&&s.note?' ✎':''}</span></button>`}
  return `<h1>Calendario</h1><div class="row" style="margin-bottom:10px"><button class="g" onclick="mv(-1)">‹</button><b style="text-transform:capitalize">${name}</b><button class="g" onclick="mv(1)">›</button></div><div class="grid">${g}</div>
  <div class="leg">${Object.values(SH).map(v=>`<span><i class="dot" style="background:${v[1]}"></i>${v[0]}</span>`).join('')}</div>
- ${taskCard()}<div class="card"><b>Sincronizar con Shifter</b><p class="f" style="margin:6px 0 10px">En Shifter exportá tu calendario como archivo .ics y cargalo acá. Los turnos aparecen como eventos en cada día.</p><div class="row"><label style="display:inline-block;margin:0;position:relative;overflow:hidden;background:var(--ac);color:#fff;border-radius:10px;padding:11px 14px;font:600 15px system-ui">Importar .ics<input type="file" id="ics" onchange="imp(this)" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;margin:0;padding:0;border:0"></label><button class="g" onclick="S.ev={};S.sh={};MSG='';save();render()">Borrar importados</button></div><div class="f" style="margin-top:8px">${MSG}</div></div>`}
+ ${taskCard()}${alCard()}<div class="card"><b>Sincronizar con Shifter</b><p class="f" style="margin:6px 0 10px">En Shifter exportá tu calendario como archivo .ics y cargalo acá. Los turnos aparecen como eventos en cada día.</p><div class="row"><label style="display:inline-block;margin:0;position:relative;overflow:hidden;background:var(--ac);color:#fff;border-radius:10px;padding:11px 14px;font:600 15px system-ui">Importar .ics<input type="file" id="ics" onchange="imp(this)" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;margin:0;padding:0;border:0"></label><button class="g" onclick="S.ev={};S.sh={};S.hr={};MSG='';save();render()">Borrar importados</button></div><div class="f" style="margin-top:8px">${MSG}</div></div>`}
 function mv(i){cur=new Date(cur.getFullYear(),cur.getMonth()+i,1);render()}
 function shiftOf(s,h){const t=s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
  if(/partid|split/.test(t))return'P';
@@ -110,10 +110,10 @@ function shiftOf(s,h){const t=s.toLowerCase().normalize('NFD').replace(/[\u0300-
  return null}
 function imp(el){const f=el.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{
  const t=r.result.replace(/\r?\n[ \t]/g,'');const NI=new Set(),days={};
- t.split('BEGIN:VEVENT').slice(1).forEach(b=>{const d=(b.match(/DTSTART[^:\n]*:(\d{4})(\d{2})(\d{2})(?:T(\d{2}))?/)||[]),s=(b.match(/SUMMARY[^:\n]*:(.*)/)||[])[1];
-  if(d[1]&&s){const k=d[1]+'-'+d[2]+'-'+d[3],v=(days[k]=days[k]||{t:[],c:[],seen:new Set()}),id=s.trim()+'|'+(d[4]||'');if(v.seen.has(id))return;v.seen.add(id);v.t.push(s.trim());const sc=shiftOf(s,d[4]);if(sc)v.c.push(sc);else NI.add(s.trim())}});
+ t.split('BEGIN:VEVENT').slice(1).forEach(b=>{const d=(b.match(/DTSTART[^:\n]*:(\d{4})(\d{2})(\d{2})(?:T(\d{2}))?/)||[]),s=(b.match(/SUMMARY[^:\n]*:(.*)/)||[])[1],en=b.match(/DTEND[^:\n]*:(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(?:\d{2})?(Z)?/);
+  if(d[1]&&s){const k=d[1]+'-'+d[2]+'-'+d[3],v=(days[k]=days[k]||{t:[],c:[],seen:new Set()}),id=s.trim()+'|'+(d[4]||'');if(v.seen.has(id))return;v.seen.add(id);v.t.push(s.trim());if(en){const ms=en[6]?Date.UTC(+en[1],en[2]-1,+en[3],+en[4],+en[5]):new Date(+en[1],en[2]-1,+en[3],+en[4],+en[5]).getTime();v.e=Math.max(v.e||0,ms)}const sc=shiftOf(s,d[4]);if(sc)v.c.push(sc);else NI.add(s.trim())}});
  let c=0,pt=0;S.sh=S.sh||{};
- Object.entries(days).forEach(([k,v])=>{S.ev[k]=v.t;if(v.t.length>=2){S.sh[k]='P';pt++;c++}else if(v.c[0]){S.sh[k]=v.c[0];c++}});
+ Object.entries(days).forEach(([k,v])=>{S.ev[k]=v.t;if(v.e)(S.hr=S.hr||{})[k]=v.e;if(v.t.length>=2){S.sh[k]='P';pt++;c++}else if(v.c[0]){S.sh[k]=v.c[0];c++}});
  MSG=(c?c+' días con turno identificado'+(pt?' ('+pt+' de jornada partida)':''):'No identifiqué turnos')+(NI.size?'. Sin identificar: '+[...NI].slice(0,6).join(', '):'');save();render()};r.onerror=()=>{MSG='No pude leer el archivo';render()};r.readAsText(f)}
 const DAYS=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 const PLAN0={1:{M:['TOC Atomizado'],T:['Preparar valija','Lavar arcillas']},2:{M:['TOC Molino'],T:['Cocer arcillas']},3:{M:['TOC Atomizado'],T:['Preparar valija']},4:{M:['^Gradiente hornos'],T:[]},5:{M:[],T:['Pasar TOCS']},6:{M:['TOC Atomizado'],T:['Vaciar silos']},0:{M:['Secar tolvas'],T:['Preparar valija','Pesar tolva','Vaciar cubos']}};
@@ -134,11 +134,11 @@ function planEd(){const o=document.createElement('div');o.className='sheet';o.on
  o.querySelector('#pk').onclick=()=>{const np={};o.querySelectorAll('textarea').forEach(t=>{(np[t.dataset.w]=np[t.dataset.w]||{M:[],T:[]})[t.dataset.s]=t.value.split('\n').map(x=>x.trim()).filter(Boolean)});S.plan=np;save();o.remove();render()}}
 function editDay(k){SD=k;const s=S.days[k]||{},ev=S.ev[k]||[];
  const o=document.createElement('div');o.className='sheet';o.onclick=e=>{if(e.target===o)o.remove()};
- o.innerHTML=`<div><b>${k.split('-').reverse().join('/')}</b>${ev.length?'<p class="f">Shifter: '+ev.join(' · ')+'</p>':''}<div class="opts">${Object.entries(SH).map(([c,v])=>`<button data-c="${c}" class="${(s.s||(S.sh||{})[k])===c?'on':''}" style="border-left:8px solid ${v[1]}">${v[0]}</button>`).join('')}</div><div id="tkl"></div><label>Nota<textarea rows="2" id="nt">${s.note||''}</textarea></label><div class="row"><button class="g" id="cl">Limpiar</button><button class="b" id="ok">Guardar</button></div></div>`;
+ o.innerHTML=`<div><b>${k.split('-').reverse().join('/')}</b>${ev.length?'<p class="f">Shifter: '+ev.join(' · ')+'</p>':''}<div class="opts">${Object.entries(SH).map(([c,v])=>`<button data-c="${c}" class="${(s.s||(S.sh||{})[k])===c?'on':''}" style="border-left:8px solid ${v[1]}">${v[0]}</button>`).join('')}</div><div id="tkl"></div><label class="f" style="display:flex;gap:10px;align-items:center;margin:8px 0"><input type="checkbox" id="alk" ${S.noal&&S.noal[k]?'':'checked'} style="width:22px;height:22px;margin:0">Avisar antes de terminar la jornada</label><label>Nota<textarea rows="2" id="nt">${s.note||''}</textarea></label><div class="row"><button class="g" id="cl">Limpiar</button><button class="b" id="ok">Guardar</button></div></div>`;
  document.body.appendChild(o);let sel=s.s||(S.sh||{})[k];const pt=()=>{o.querySelector('#tkl').innerHTML=tasksHTML(k,sel)};pt();
  o.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{sel=b.dataset.c;pt();o.querySelectorAll('[data-c]').forEach(x=>x.classList.toggle('on',x===b))});
  o.querySelector('#cl').onclick=()=>{delete S.days[k];save();o.remove();render()};
- o.querySelector('#ok').onclick=()=>{S.days[k]={s:sel,note:o.querySelector('#nt').value};save();o.remove();render()}}
+ o.querySelector('#ok').onclick=()=>{S.noal=S.noal||{};if(o.querySelector('#alk').checked)delete S.noal[k];else S.noal[k]=true;S.days[k]={s:sel,note:o.querySelector('#nt').value};save();o.remove();render()}}
 function medHTML(){const IC={'dar': '⚪', 'dre': '⬜', 'abs': '💧', 'gra': '🔬', 'mec': '🔨', 'con': '📏', 'rec': '🧪', 'ata': '🌫️', 'hum': '💦'};return `<h1>Mediciones</h1><div class="mg">`+CALCS.map(c=>{const n=(S.hist[c.id]||[]).length;return `<button class="mc" onclick="open_('${c.id}')"><i>${IC[c.id]||'🧪'}</i><b>${c.n}</b><span class="f">${n} ${n===1?'registro':'registros'}</span></button>`}).join('')+`</div>`}
 let TB=[],TC=0;const tbInit=()=>{TB=Array.from({length:(calc&&calc.rows)||20},()=>['','']);};
 const pf=s=>parseFloat(String(s).replace(',','.'));
@@ -178,6 +178,38 @@ function graUpd(o){const ex=document.getElementById('ex'),rs=document.getElement
 const R=x=>typeof x==='number'?{r:x,ex:[]}:x;
 function upd(){if(calc.duo)return duUpd();(S.dr=S.dr||{})[calc.id]=calc.tbl?{TB:TB,TC:TC}:Object.fromEntries(calc.f.map(f=>[f[0],document.getElementById('i-'+f[0]).value]));save();const o=R(calc.c(vals()));if(calc.tbl)rowsUpd();if(calc.id==='gra')return graUpd(o);document.getElementById('rs').textContent=isFinite(o.r)?fmt(o.r,calc.dec)+' '+calc.u:'—';document.getElementById('ex').innerHTML=o.ex.map(l=>/^D\. aparente seco/.test(l)?'<div class="sec">'+l+'</div>':l).join('<br>')}
 function sv(){const o=R(calc.c(vals())),r=o.r;if(!isFinite(r))return;(S.hist[calc.id]=S.hist[calc.id]||[]).push({r,ex:o.ex,pz:calc.tbl?tvals().filter(isFinite):undefined,d:new Date().toLocaleString('es',{dateStyle:'short',timeStyle:'short'})});save();render()}
+
+S.al=S.al||{on:true,min:30,fe:{M:'',T:'',N:'',P:''}};S.noal=S.noal||{};S.fired=S.fired||{};
+const WK=['M','T','N','P'];
+function endOf(k){const sc=((S.days[k]||{}).s)||(S.sh||{})[k];if(!WK.includes(sc))return null;if((S.hr||{})[k])return S.hr[k];const f=S.al.fe[sc];if(!f)return null;const [y,m,d]=k.split('-').map(Number),[h,mi]=f.split(':').map(Number);return new Date(y,m-1,d+(sc==='N'||(sc==='T'&&h<6)?1:0),h,mi).getTime()}
+function alarmList(n){const out=[],t=new Date();for(let i=-1;i<n;i++){const x=new Date(t.getFullYear(),t.getMonth(),t.getDate()+i),k=key(x.getFullYear(),x.getMonth(),x.getDate()),e=endOf(k);if(e)out.push({k,e,a:e-S.al.min*60000,off:!!S.noal[k]})}return out}
+let AC=null,ringT=null;
+const unlock=()=>{try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume()}catch(e){}};
+addEventListener('pointerdown',unlock,{passive:true});
+function beep(){if(!AC)return;[0,.25,.5].forEach(o=>{const q=AC.createOscillator(),g=AC.createGain();q.frequency.value=880;g.gain.value=.25;q.connect(g);g.connect(AC.destination);q.start(AC.currentTime+o);q.stop(AC.currentTime+o+.15)})}
+function stopRing(){clearInterval(ringT);ringT=null;const b=document.getElementById('alb');if(b)b.remove()}
+function ring(a){if(ringT)return;const b=document.createElement('div');b.id='alb';b.style.cssText='position:fixed;left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 12px);z-index:99;background:var(--ac);color:#fff;border-radius:16px;padding:14px;box-shadow:0 6px 24px rgba(0,0,0,.25)';
+ b.innerHTML='<b>Faltan '+S.al.min+' min para terminar la jornada</b><div style="margin:4px 0 10px;font-size:14px">Termina a las '+new Date(a.e).toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'})+'</div><button style="background:#fff;color:var(--ac);border:0;padding:10px 18px;border-radius:10px;font:600 15px system-ui" onclick="stopRing()">Apagar</button>';
+ document.body.appendChild(b);beep();let n=0;ringT=setInterval(()=>{beep();if(++n>40)stopRing()},1500);try{navigator.vibrate&&navigator.vibrate([300,150,300])}catch(e){}
+ try{if(window.Notification&&Notification.permission==='granted')navigator.serviceWorker.ready.then(r=>r.showNotification('Fin de jornada',{body:'Faltan '+S.al.min+' min para terminar',tag:'fj',requireInteraction:true,vibrate:[300,150,300]}))}catch(e){}}
+function alCheck(){if(!S.al.on)return;const n=Date.now();alarmList(2).forEach(a=>{if(a.off||S.fired[a.k+'_'+a.e])return;if(n>=a.a&&n<a.a+10*60000&&n<a.e){S.fired[a.k+'_'+a.e]=1;save();ring(a)}})}
+setInterval(alCheck,15000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)alCheck()});
+const fmtDT=ms=>new Date(ms).toLocaleString('es',{weekday:'short',day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'});
+function alOn(v){S.al.on=v;save();if(v){unlock();try{window.Notification&&Notification.requestPermission()}catch(e){}}render()}
+function alSkip(k){S.noal[k]=true;save();render()}
+function alMin(v){v=Math.max(5,Math.min(240,+v||30));S.al.min=v;save();render()}
+function alIcs(){const L=alarmList(60).filter(a=>!a.off&&a.a>Date.now()),z=ms=>new Date(ms).toISOString().replace(/[-:]/g,'').slice(0,15)+'Z';
+ const b=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//MiApp//ES'].concat(...L.map(a=>['BEGIN:VEVENT','UID:fj-'+a.k+'@miapp','DTSTAMP:'+z(Date.now()),'DTSTART:'+z(a.a),'DTEND:'+z(a.a+60000),'SUMMARY:Fin de jornada en '+S.al.min+' min','BEGIN:VALARM','TRIGGER:PT0M','ACTION:AUDIO','END:VALARM','BEGIN:VALARM','TRIGGER:PT0M','ACTION:DISPLAY','DESCRIPTION:Fin de jornada','END:VALARM','END:VEVENT'])).concat(['END:VCALENDAR']);
+ const u=URL.createObjectURL(new Blob([b.join('\r\n')],{type:'text/calendar'})),x=document.createElement('a');x.href=u;x.download='avisos-fin-de-jornada.ics';document.body.appendChild(x);x.click();x.remove()}
+function alCard(){const now=Date.now(),l=alarmList(14),nx=l.filter(a=>a.a>now&&!a.off)[0],sin=(()=>{let c=0;const t=new Date();for(let i=0;i<14;i++){const x=new Date(t.getFullYear(),t.getMonth(),t.getDate()+i),k=key(x.getFullYear(),x.getMonth(),x.getDate()),sc=((S.days[k]||{}).s)||(S.sh||{})[k];if(WK.includes(sc)&&!endOf(k))c++}return c})();
+ const f=(c,n)=>`<label class="f" style="display:flex;justify-content:space-between;align-items:center;margin:4px 0">${n}<input type="time" value="${S.al.fe[c]}" onchange="S.al.fe['${c}']=this.value;save();render()" style="width:auto;margin:0;padding:6px"></label>`;
+ return `<div class="card"><div class="row"><b>Aviso de fin de jornada</b><input type="checkbox" ${S.al.on?'checked':''} onchange="alOn(this.checked)" style="width:24px;height:24px;margin:0"></div>
+ <p class="f" style="margin:6px 0">${!S.al.on?'Desactivado. No suena ningún aviso.':nx?'Próximo aviso: <b>'+fmtDT(nx.a)+'</b>':'No hay avisos próximos.'}${sin&&S.al.on?' · '+sin+' día(s) de trabajo sin horario de salida (cargalo abajo).':''}</p>
+ ${S.al.on&&nx?`<button class="g" onclick="alSkip('${nx.k}')">Saltar este aviso</button>`:''}
+ <label class="f" style="display:flex;justify-content:space-between;align-items:center;margin:8px 0 4px">Minutos antes de terminar<input type="number" value="${S.al.min}" onchange="alMin(this.value)" style="width:80px;margin:0;padding:6px"></label>
+ <p class="f" style="margin:8px 0 2px">Hora de salida por turno (se usa solo si el archivo importado no trae el horario):</p>${f('M','Mañana')}${f('T','Tarde')}${f('N','Noche')}${f('P','Partida')}
+ <p class="f" style="margin:8px 0">La app solo puede sonar si está abierta. Para que suene aunque esté cerrada, exportá los avisos y abrilos con tu app de calendario.</p><button class="g" onclick="alIcs()">Exportar avisos (.ics)</button></div>`}
+(()=>{let x0,y0,t0;const m=document.getElementById('m');m.addEventListener('touchstart',e=>{const t=e.touches[0];x0=t.clientX;y0=t.clientY;t0=Date.now()},{passive:true});m.addEventListener('touchend',e=>{if(tab!=='cal'||calc||document.querySelector('.sheet'))return;const t=e.changedTouches[0],dx=t.clientX-x0,dy=t.clientY-y0;if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.5&&Date.now()-t0<700)mv(dx<0?1:-1)},{passive:true})})();
 history.replaceState({tab:'med',c:null},'');render();
 </script>
 <script>
