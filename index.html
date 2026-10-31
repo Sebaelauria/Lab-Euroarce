@@ -146,11 +146,14 @@ function off(){on=false;stopRec();try{TTS&&TTS.cancel()}catch(e){}try{wl&&wl.rel
 function fail(t){on=false;stopRec();try{TTS&&TTS.cancel()}catch(e){}fab.classList.remove('on');setSt('idle');$('vr').textContent=t;$('vt').textContent='';$('vx').textContent='Cerrar'}
 function say(t,then){last=t;$('vr').textContent=t;if(!TTS){then?then():listen();return}
  stopRec();TTS.cancel();setSt('speaking');const u=new SpeechSynthesisUtterance(t),V=TTS.getVoices();
- const v=V.find(x=>/^es[-_](AR|US|MX)/i.test(x.lang))||V.find(x=>/^es/i.test(x.lang));u.lang=v?v.lang:'es-AR';if(v)u.voice=v;u.rate=1.05;
- u.onend=u.onerror=()=>{if(st==='speaking'&&on){setSt('listening');then?then():setTimeout(listen,200)}};TTS.speak(u)}
+ const v=V.find(x=>/^es[-_](AR|US|MX)/i.test(x.lang))||V.find(x=>/^es/i.test(x.lang));u.lang=v?v.lang:'es-AR';if(v)u.voice=v;u.rate=1.1;
+ u.onend=u.onerror=()=>{if(st==='speaking'&&on){bp=true;setSt('listening');then?then():setTimeout(listen,200)}};TTS.speak(u)}
+let bp=false,ac=null;
+function beep(){try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator(),g=ac.createGain();o.frequency.value=880;g.gain.value=.06;o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+.08)}catch(e){}}
 function mk(){rec=new SR();rec.lang='es-AR';rec.interimResults=true;rec.continuous=false;
  rec.onresult=e=>{let f='',i='';for(const r of e.results){if(r.isFinal)f+=r[0].transcript;else i+=r[0].transcript}$('vt').textContent=f||i;if(f&&st==='listening')handle(f)};
  rec.onerror=e=>{if(e.error==='not-allowed'||e.error==='service-not-allowed')fail('No tengo permiso para usar el micrófono. Habilitalo en los ajustes del navegador para este sitio.');else if(e.error==='network')fail('Sin conexión: el reconocimiento de voz de Android necesita internet.');else if(e.error==='audio-capture')fail('No encuentro un micrófono disponible.')};
+ rec.onstart=()=>{if(bp){bp=false;beep()}};
  rec.onend=()=>{if(on&&st==='listening')setTimeout(listen,150)}}
 function listen(){if(!on)return;setSt('listening');if(!rec)mk();try{rec.start()}catch(e){}}
 async function start(){if(!SR){pn.style.display='block';fail('Este navegador no permite reconocimiento de voz. Abrí la app en Chrome para Android.');return}
@@ -160,15 +163,17 @@ async function start(){if(!SR){pn.style.display='block';fail('Este navegador no 
 fab.onclick=start;$('vx').onclick=off;$('vo').onclick=()=>{if(st==='speaking')TTS.cancel()};
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&on)off()});
 /* ---------- números y texto ---------- */
-const W={cero:0,uno:1,dos:2,tres:3,cuatro:4,cinco:5,seis:6,siete:7,ocho:8,nueve:9,diez:10,once:11,doce:12,trece:13,catorce:14,quince:15,dieciseis:16,diecisiete:17,dieciocho:18,diecinueve:19,veinte:20,treinta:30,cuarenta:40,cincuenta:50,sesenta:60,setenta:70,ochenta:80,noventa:90,cien:100};
-function norm(t){t=nz(t).replace(/(\d)[.,](\d)/g,'$1#$2').replace(/(\d) (coma|punto) (\d)/g,'$1#$3').replace(/ coma /g,'#');
- t=t.replace(/\b(treinta|cuarenta|cincuenta|sesenta|setenta|ochenta|noventa) y ([a-z]+)\b/g,(m,a,b)=>W[b]<10?W[a]+W[b]:m);
- return t.replace(/\b[a-z]+\b/g,w=>W[w]!==undefined?W[w]:w)}
+const W={cero:0,uno:1,dos:2,tres:3,cuatro:4,cinco:5,seis:6,siete:7,ocho:8,nueve:9,diez:10,once:11,doce:12,trece:13,catorce:14,quince:15,dieciseis:16,diecisiete:17,dieciocho:18,diecinueve:19,veinte:20,veintiuno:21,veintidos:22,veintitres:23,veinticuatro:24,veinticinco:25,veintiseis:26,veintisiete:27,veintiocho:28,veintinueve:29,treinta:30,cuarenta:40,cincuenta:50,sesenta:60,setenta:70,ochenta:80,noventa:90,cien:100};
+function norm(t){t=nz(t).replace(/\b(treinta|cuarenta|cincuenta|sesenta|setenta|ochenta|noventa) y ([a-z]+)\b/g,(m,a,b)=>W[b]<10?W[a]+W[b]:m);
+ t=t.replace(/\b[a-z]+\b/g,w=>W[w]!==undefined?W[w]:w).replace(/(\d)[.,](\d)/g,'$1#$2');
+ return t.replace(/(\d+)\s+(?:coma|punto|con|como)\s+(\d+(?:\s\d(?!\d|\s+(?:coma|punto|con|como)))*)/g,(m,a,b)=>a+'#'+b.replace(/\s/g,''))}
 const fmtN=n=>String(n).replace('.',',');
 const spk=s=>s.replace('.',',').replace('%',' por ciento').replace('g/cc',' gramos por centímetro cúbico').replace(/·/g,' por ').replace(/−/g,' menos ').replace('ρ','densidad').replace(/ \/ /g,' dividido ');
-const STOP=/^(el|la|los|las|de|del|en|al|a|como|que|valor|campo|con|y|e|pone|poner|pon|carga|cargar|ingresa|ingresar|anota|anotar|cambia|cambialo|cambiar|es|son|numero|mas|menos|suma|sumale|sumar|resta|restale|restar|igual|ese|eso|esa|lo)$/;
+const STOP=/^(el|la|los|las|de|del|en|al|a|como|que|valor|campo|con|y|e|pone|poner|pon|carga|cargar|ingresa|ingresar|anota|anotar|cambia|cambialo|cambiar|es|son|numero|mas|menos|suma|sumale|sumar|resta|restale|restar|igual|ese|eso|esa|lo|primer|primero|segundo|tercero|cuarto|quinto|sexto|septimo|octavo|noveno|decimo|siguiente|proximo|dato|datos|corregi|corregir|modifica)$/;
 const lab=k=>calc.f.find(x=>x[0]===k)[1].replace(/\s*\(.*?\)/g,'');
-const res=()=>{const r=$('rs');return r&&r.textContent!=='—'?' Resultado: '+spk(r.textContent)+'.':''};
+function resText(){if(tab!=='med'||!calc)return null;
+ if(calc.duo){const a=[0,1].map(g=>{const e=$('du'+g);return e&&e.textContent!=='—'?(g?'R mec: ':'Fuerza: ')+spk(e.innerText.replace(/\n/g,', ').replace('Desv. std','desviación estándar')):''}).filter(Boolean);return a.length?a.join('. ')+'.':null}
+ const r=$('rs');if(!r||r.textContent==='—')return null;const ex=$('ex').innerText.trim().replace(/\n+/g,'. ');return 'El resultado es '+spk(r.textContent)+'.'+(ex?' '+spk(ex)+'.':'')}
 /* ---------- carga de valores ---------- */
 const UNITS=/^(gramos?|g|milimetros?|mm|centimetros?|cc|ml|mililitros?|mpa|newtons?|n|por|ciento|porciento|porcentaje|pieza|piezas|medicion|campo)$/;
 function lev(a,b){const d=[];for(let i=0;i<=a.length;i++){d[i]=[i];for(let j=1;j<=b.length;j++)d[i][j]=i?0:j}for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[a.length][b.length]}
@@ -181,18 +186,27 @@ function ff(ws,nums){ws=ws.filter(w=>!UNITS.test(w));if(!ws.length)return[];
  if(c.length>1){const ex=c.filter(f=>f[2].every(l=>ws.some(w=>sim(w,l)>=.8)));if(ex.length===1)c=ex}
  return c.map(f=>[f[0],f[1]])}
 function put(k,val){const el=$('i-'+k),old=el.value,id=calc.id;UN.push(()=>{const e=$('i-'+k);if(calc&&calc.id===id&&e){e.value=old;upd()}});el.value=val===''?'':fmtN(val);upd();lf=k}
+const ORD={primer:0,primero:0,segundo:1,tercero:2,cuarto:3,quinto:4,sexto:5,septimo:6,octavo:7,noveno:8,decimo:9};
+const done=()=>calc.f.every(x=>$('i-'+x[0]).value!=='');
+const nxt=()=>calc.f.find(x=>!$('i-'+x[0]).value);
+const ack=v=>{if(done())return v+'. Datos completos. '+(resText()||'');const e=nxt();return v+'. Siguiente: '+lab(e[0])+'.'};
+function intro(){if(calc.tbl)return 'Pieza 1.';if(calc.duo)return 'Decime la fuerza o la R mec.';const e=nxt();return e?'Primer dato: '+lab(e[0])+'.':'Ya están todos los datos.'}
 function setStd(t,nums,del){
  const rel=/\b(mas|suma|sumale|sumar)\b/.test(t)?1:/\b(menos|resta|restale|restar)\b/.test(t)?-1:0;
+ const chg=del||rel||/\b(cambia|cambialo|cambiar|corregi|corregir|modifica|ese|eso|esa)\b/.test(t);
+ const od=t.match(/\b(primer|primero|segundo|tercero|cuarto|quinto|sexto|septimo|octavo|noveno|decimo)\b/),sg=/\b(siguiente|proximo)\b/.test(t);
  const ws=t.replace(/\d+(#\d+)?/g,' ').split(/[^a-z]+/).filter(w=>w&&!STOP.test(w)&&!/^(borra|borrar|elimina|quita|saca)$/.test(w));
  let k=null;
  if(ws.length){const c=ff(ws,nums);if(c.length!==1){say(c.length?'Hay varias opciones: '+c.map(x=>x[1].trim()).join(', ')+'. ¿Cuál querés?':'No encontré ese campo. Los campos de esta medición son: '+calc.f.slice(0,8).map(x=>x[1].replace(/\s*\(.*?\)/g,'')).join(', ')+'.');return}k=c[0][0]}
- else if(lf&&calc.f.some(x=>x[0]===lf)&&(del||nums.length===1))k=lf;
+ else if(od&&calc.f[ORD[od[1]]])k=calc.f[ORD[od[1]]][0];
+ else if(sg){const i=calc.f.findIndex(x=>x[0]===lf),e=calc.f[i+1]||nxt();if(e)k=e[0]}
+ else if(chg&&lf&&calc.f.some(x=>x[0]===lf))k=lf;
  if(del){if(!k){say('¿Qué valor querés borrar?');return}put(k,'');say('Borré '+lab(k)+'.');return}
  if(!nums.length){say('No escuché ningún número.');return}
- if(k){let v=+nums[0];if(rel){const cur=parseFloat(String($('i-'+k).value).replace(',','.'))||0;v=Math.round((cur+rel*v)*1e6)/1e6}put(k,v);say(lab(k)+' '+fmtN(v)+'.'+res());return}
+ if(k){let v=+nums[0];if(rel){const cur=parseFloat(String($('i-'+k).value).replace(',','.'))||0;v=Math.round((cur+rel*v)*1e6)/1e6}put(k,v);say(ack(fmtN(v)));return}
  const em=()=>calc.f.filter(x=>!$('i-'+x[0]).value);let n=0;
  nums.forEach(x=>{const e=em()[0];if(e){put(e[0],+x);n++}});
- const nx=em()[0];say(n?'Cargado.'+(nx?' Sigue '+nx[1].replace(/\s*\(.*?\)/g,'')+'.':'')+res():'Ya no quedan campos vacíos.')}
+ say(n?ack(nums.slice(0,n).map(fmtN).join(' y ')):'Ya no quedan campos vacíos. Decime qué campo querés cambiar.')}
 const inp=sel=>[...document.querySelectorAll(sel)];
 function fillT(t,nums){
  const pm=t.match(/pieza (\d+)/);let row=pm?+pm[1]-1:null;if(pm){const i=nums.indexOf(pm[1]);if(i>=0)nums.splice(i,1)}
@@ -204,25 +218,25 @@ function fillT(t,nums){
  if(grow)render();
  pos.forEach(([r,c,n])=>{const old=TB[r][c],id=calc.id;UN.push(()=>{if(calc&&calc.id===id){TB[r][c]=old;const x=inp('#m table input')[r*2+c];if(x)x.value=old;upd()}});TB[r][c]=fmtN(n);const e=inp('#m table input')[r*2+c];if(e)e.value=fmtN(n)});
  upd();const l=pos[pos.length-1],e=inp('#m table input')[l[0]*2+l[1]];if(e)e.scrollIntoView({block:'center'});
- const nx=TB.findIndex(x=>x[0]===''||x[1]==='');say('Cargado. '+(nx>=0?'Sigue la pieza '+(nx+1)+'.':'Tabla completa.')+(nx<0?res():''))}
+ const nx=TB.findIndex(x=>x[0]===''||x[1]==='');say(nums.map(fmtN).join(' y ')+'. '+(nx>=0?'Pieza '+(nx+1)+'.':'Tabla completa. '+(resText()||'')))}
 function fillD(t,nums){
  const g=/fuerza|newton/.test(t)?0:/resisten|mecanic|\br\b|mpa|rmec|erre/.test(t)?1:(DU[0].some(x=>x==='')?0:1);
  const pm=t.match(/pieza (\d+)/);if(pm){const i=nums.indexOf(pm[1]);if(i>=0)nums.splice(i,1)}
  if(!nums.length){say('No escuché ningún número.');return}
+ nums=nums.map(x=>g===0&&/^\d{1,3}\.\d{3}$/.test(x)?x.replace('.',''):x);
  const slots=pm?[+pm[1]-1]:DU[g].map((x,i)=>x===''?i:-1).filter(i=>i>=0);let n=0;
  nums.forEach((x,j)=>{const i=pm?slots[0]:slots[j];if(i===undefined||i>3)return;const old=DU[g][i],id=calc.id;UN.push(()=>{if(calc&&calc.id===id){DU[g][i]=old;const e=inp('#m input')[g*4+i];if(e)e.value=old;duUpd()}});DU[g][i]=fmtN(x);const e=inp('#m input')[g*4+i];if(e)e.value=fmtN(x);n++});
- duUpd();const full=DU[g].every(x=>x!=='');
- say((n?'Cargado en '+(g?'R mec':'fuerza')+'.':'No quedan huecos libres, usá "pieza" y el número para cambiar uno.')+(full?' '+spk($('du'+g).innerText.replace(/\n/g,', ').replace('Desv. std','desviación estándar')):''))}
-function read(){if(tab!=='med'||!calc){say('No hay ninguna medición abierta.');return}
- if(calc.duo){const a=[0,1].map(g=>{const e=$('du'+g);return e&&e.textContent!=='—'?(g?'R mec: ':'Fuerza: ')+spk(e.innerText.replace(/\n/g,', ').replace('Desv. std','desviación estándar')):''}).filter(Boolean);say(a.length?a.join('. ')+'.':'Todavía no hay datos.');return}
- const r=$('rs').textContent;if(r==='—'){say('Todavía faltan datos para calcular.');return}
- const ex=$('ex').innerText.trim().replace(/\n+/g,'. ');say('El resultado es '+spk(r)+'.'+(ex?' '+spk(ex)+'.':''))}
+ duUpd();const all=DU[0].every(x=>x!=='')&&DU[1].every(x=>x!==''),ng=DU[g].findIndex(x=>x==='')>=0?g:1-g,ni=DU[ng].findIndex(x=>x==='');
+ say(n?nums.map(fmtN).join(' y ')+'. '+(all?'Datos completos. '+(resText()||''):'Siguiente: '+(ng?'R mec':'fuerza')+' pieza '+(ni+1)+'.'):'No quedan huecos libres, usá "pieza" y el número para cambiar uno.')}
+function read(){const x=resText();say(tab!=='med'||!calc?'No hay ninguna medición abierta.':x||'Todavía faltan datos para calcular.')}
 /* ---------- intérprete ---------- */
 const NAV=[[/redond/,'dar'],[/rectang/,'dre'],[/absorc|\ba\.?a\b/,'abs'],[/granul/,'gra'],[/resisten|mecanic/,'mec'],[/contrac/,'con'],[/rechazo|barbotina/,'rec'],[/atomiz/,'ata'],[/humedad/,'hum']];
 function handle(raw){setSt('thinking');$('vt').textContent=raw;const t=norm(raw),nums=(t.match(/\d+(?:#\d+)?/g)||[]).map(x=>x.replace('#','.'));
  if(pend){const p=pend;pend=null;if(/\b(si|dale|confirmo|ok|adelante|claro|seguro)\b/.test(t))p();else say('Cancelado.');return}
  if(/\b(terminar|termina|terminemos|chau|adios|desactivar|apagar|apaga|fin|basta)\b/.test(t)){say('Hasta luego.',off);return}
- if(/deshac|anterior|volve|atras/.test(t)&&!nums.length){const f=UN.pop();if(f){f();say('Listo, volví al valor anterior.'+res())}else say('No hay nada que deshacer.');return}
+ if(!nums.length&&UN.length&&/\b(no|mal|error|me equivoque|corregi)\b/.test(t)){UN.pop()();say('Anulado. Decime de nuevo el dato.');return}
+ if(!nums.length&&/\b(listo|termine|ya esta|eso es todo|ya termine)\b/.test(t)){read();return}
+ if(/deshac|anterior|volve|atras/.test(t)&&!nums.length){const f=UN.pop();if(f){f();say('Listo, volví al valor anterior.')}else say('No hay nada que deshacer.');return}
  if(/repet/.test(t)){if(/calcul|resultado|cuenta/.test(t))read();else say(last||'Todavía no dije nada.');return}
  if(/explic|formula|como se calcula/.test(t)){if(tab!=='med'||!calc)say('Abrí primero una medición.');else say(calc.fo?'La fórmula es: '+spk(calc.fo)+'.':'No tengo la fórmula cargada para esta medición.');return}
  if(/guard/.test(t)){if(tab!=='med'||!calc){say('No hay ninguna medición abierta para guardar.');return}const h=(S.hist[calc.id]||[]).length;sv();say((S.hist[calc.id]||[]).length>h?'Guardado en el historial.':'No hay un resultado para guardar todavía.');return}
@@ -233,11 +247,11 @@ function handle(raw){setSt('thinking');$('vt').textContent=raw;const t=norm(raw)
   if(/calendario|agenda/.test(t)){go('cal');say('Calendario.');return}
   if(/mediciones|menu|inicio/.test(t)&&!NAV.some(n=>n[0].test(t))){go('med');say('Mediciones.');return}
   const n=NAV.find(n=>n[0].test(t));
-  if(n&&/\b(abri|abre|anda|ir|vamos|mostrame|ve|a|la|el)\b/.test(t)||n){if(!n){say('No encontré esa medición.');return}go('med');open_(n[1]);lf=null;say('Abrí '+calc.n+'.');return}
+  if(n&&/\b(abri|abre|anda|ir|vamos|mostrame|ve|a|la|el)\b/.test(t)||n){if(!n){say('No encontré esa medición.');return}go('med');open_(n[1]);lf=null;say('Abrí '+calc.n+'. '+intro());return}
   if(/calcul|resultado|cuanto|decime|lee/.test(t)){read();return}
   if(tab==='med'&&calc&&!calc.tbl&&!calc.duo){const ws=t.split(/[^a-z]+/).filter(w=>w&&!STOP.test(w)),c=ws.length?ff(ws,[]):[];if(c.length===1){lf=c[0][0];say('¿Cuánto vale '+c[0][1].trim()+'?');return}}
   say('No te entendí. ¿Podés repetirlo?');return}
- if(tab!=='med'||!calc){const n=NAV.find(n=>n[0].test(t));if(n){go('med');open_(n[1]);lf=null;say('Abrí '+calc.n+'. Decime los valores.');return}say('Primero decime qué medición querés abrir.');return}
+ if(tab!=='med'||!calc){const n=NAV.find(n=>n[0].test(t));if(n){go('med');open_(n[1]);lf=null;say('Abrí '+calc.n+'. '+intro());return}say('Primero decime qué medición querés abrir.');return}
  if(calc.tbl)fillT(t,nums);else if(calc.duo)fillD(t,nums);else setStd(t,nums,false)}
 })();
 </script><script>if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));</script></body></html>
