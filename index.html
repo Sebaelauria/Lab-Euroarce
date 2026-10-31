@@ -74,7 +74,7 @@ const CALCS=[
 {id:'gra',n:'Granulometría',u:'% retenido total',seq:1,f:[['M','Muestra (g)',200,1]].concat(MA.map((m,i)=>['t'+i,'Tamiz + muestra '+m+' µm (g)'])),fo:'% malla = (Tamiz+g − Tara tamiz) / Muestra · 100',c:v=>{const M=v.M||200;let s=0;const ex=[],rows=MA.map((m,i)=>{const p=(v['t'+i]-T[i])/M*100;if(isFinite(p)){s+=p;ex.push(m+': '+fmt(p,2)+' %')}return[m,p,i]});return{r:ex.length?s:NaN,ex:ex.length?ex.concat(['Finos/pérdida: '+fmt(100-s,2)+' %']):[],rows}}},
 {id:'mec',n:'Resistencia mecánica',u:'',duo:1,f:[],fo:'',c:()=>duSum()},
 {id:'con',n:'Contracción lineal',u:'% (media)',dec:2,tbl:['D. inicial (mm)','D. final (mm)'],f:[],fo:'CL = (Di − Df) / Di · 100',rf:(a,b)=>(a-b)/a*100,c:()=>tsum()},
-{id:'rec',n:'Rechazo de barbotina',u:'% rechazo',dec:2,f:[['d','Densidad (g/cc)'],['pr','Peso rechazo (g)']],fo:'Gr. barbotina = ρ·100 · %CS = 156,33 − 154,6/ρ · Gr. secos = Gr. barbotina · %CS / 100 · Corrector = Gr. secos / 100 · %Rechazo = rechazo / Gr. secos · 100',c:v=>{if(!isFinite(v.d))return NaN;const g=v.d*100,cs=156.33-154.6/v.d,gs=g*cs/100;return{r:v.pr/gs*100,ex:['Volumen barbotina: 100 mL','Gramos barbotina: '+fmt(g,1)+' g','% C.S: '+fmt(cs,1)+' %','Gramos secos: '+fmt(gs,2)+' g','Corrector: '+fmt(gs/100,3)]}}},
+{id:'rec',n:'Rechazo de barbotina',u:'% rechazo',dec:2,tbl:['Densidad (g/cc)','Peso rechazo (g)'],rows:3,rowwise:1,f:[],fo:'% rechazo = Peso rechazo / (ρ · (156,33 − 154,6 / ρ)) · 100',rf:(d,pr)=>{const cs=156.33-154.6/d;return pr/(d*cs)*100},c:()=>tsum()},
 {id:'ata',n:'Densidad atomizado',u:'g/cc',dec:3,f:[['a','Peso LBG (g)',141.6,1],['b','Peso atomizado + LBG (g)'],['V','Volumen (cc)',500,1]],fo:'Densidad = ((Peso atomizado + LBG) − Peso LBG) / 500 · LBG = 141,6 g y 500 cc son constantes',c:v=>(v.b-141.6)/500},
 {id:'hum',n:'Humedad (agua a agregar)',u:'ml',f:[['hi','% Humedad inicial'],['hf','% Humedad final'],['p','Peso inicial atomizado (g)']],fo:'Agua = Peso inicial · (%Hf − %Hi) / 100',c:v=>{const a=v.p*(v.hf-v.hi)/100;return{r:a,ex:['Peso final atomizado: '+fmt(v.p+a)+' g']}}}
 ];
@@ -120,14 +120,14 @@ function editDay(k){const s=S.days[k]||{},ev=S.ev[k]||[];
  o.querySelector('#cl').onclick=()=>{delete S.days[k];save();o.remove();render()};
  o.querySelector('#ok').onclick=()=>{S.days[k]={s:sel,note:o.querySelector('#nt').value};save();o.remove();render()}}
 function medHTML(){const IC={'dar': '⚪', 'dre': '⬜', 'abs': '💧', 'gra': '🔬', 'mec': '🔨', 'con': '📏', 'rec': '🧪', 'ata': '🌫️', 'hum': '💦'};return `<h1>Mediciones</h1><div class="mg">`+CALCS.map(c=>{const n=(S.hist[c.id]||[]).length;return `<button class="mc" onclick="open_('${c.id}')"><i>${IC[c.id]||'🧪'}</i><b>${c.n}</b><span class="f">${n} ${n===1?'registro':'registros'}</span></button>`}).join('')+`</div>`}
-let TB=[],TC=0;const tbInit=()=>{TB=Array.from({length:20},()=>['','']);};
+let TB=[],TC=0;const tbInit=()=>{TB=Array.from({length:(calc&&calc.rows)||20},()=>['','']);};
 const pf=s=>parseFloat(String(s).replace(',','.'));
 function tvals(){return TB.map(r=>calc.rf(pf(r[0]),pf(r[1])))}
 function tsum(){const res=tvals().filter(isFinite),n=res.length;if(!n)return NaN;const m=res.reduce((a,b)=>a+b)/n,sd=n>1?Math.sqrt(res.reduce((a,b)=>a+(b-m)*(b-m),0)/(n-1)):NaN;return{r:m,ex:[]}}
 function rowsUpd(){tvals().forEach((x,i)=>{const e=document.getElementById('r'+i);if(e)e.textContent=isFinite(x)?fmt(x,2)+' %':'—'})}
 function tbs(i,j,v){TB[i][j]=v;upd()}
 function tblHTML(){const h=S.hist[calc.id]||[];
- return `<button class="back" onclick="back()">‹ Mediciones</button><h1>${calc.n}</h1><div class="card"><div class="f">${calc.fo}</div><table style="width:100%;border-collapse:collapse;margin-top:8px"><tr class="f"><td>#</td><td>${calc.tbl[0]}</td><td>${calc.tbl[1]}</td><td style="text-align:right"><b>Resultado</b></td></tr>${TB.map((r,i)=>`<tr><td class="f">${i+1}</td><td><input inputmode="decimal" value="${r[0]}" oninput="tbs(${i},0,this.value)" style="margin:2px 4px 2px 0;padding:8px"></td><td><input inputmode="decimal" value="${r[1]}" oninput="tbs(${i},1,this.value)" style="margin:2px 4px 2px 0;padding:8px"></td><td id="r${i}" class="gv" style="text-align:right;white-space:nowrap">—</td></tr>`).join('')}</table><div class="row" style="margin:10px 0"><button class="g" onclick="TB.push(['','']);render()">+ Pieza</button><button class="g" onclick="tbInit();render()">Limpiar</button></div><div class="f" id="rs" style="display:none"></div><div class="f" id="ex"></div><div style="margin-top:10px"><button class="b" onclick="sv()">Guardar</button></div></div><h2>Historial</h2>${h.length?h.slice().reverse().slice(0,30).map(x=>hi(x)).join(''):'<p class="f">Sin registros todavía.</p>'}`}
+ return `<button class="back" onclick="back()">‹ Mediciones</button><h1>${calc.n}</h1><div class="card"><div class="f">${calc.fo}</div><table style="width:100%;border-collapse:collapse;margin-top:8px"><tr class="f"><td>#</td><td>${calc.tbl[0]}</td><td>${calc.tbl[1]}</td><td style="text-align:right"><b>Resultado</b></td></tr>${TB.map((r,i)=>`<tr><td class="f">${i+1}</td><td><input inputmode="decimal" value="${r[0]}" oninput="tbs(${i},0,this.value)" style="margin:2px 4px 2px 0;padding:8px"></td><td><input inputmode="decimal" value="${r[1]}" oninput="tbs(${i},1,this.value)" style="margin:2px 4px 2px 0;padding:8px"></td><td id="r${i}" class="gv" style="text-align:right;white-space:nowrap">—</td></tr>`).join('')}</table><div class="row" style="margin:10px 0">${calc.rows?'':`<button class="g" onclick="TB.push(['','']);render()">+ Pieza</button>`}<button class="g" onclick="tbInit();render()">Limpiar</button></div><div class="f" id="rs" style="display:none"></div><div class="f" id="ex"></div><div style="margin-top:10px"><button class="b" onclick="sv()">Guardar</button></div></div><h2>Historial</h2>${h.length?h.slice().reverse().slice(0,30).map(x=>hi(x)).join(''):'<p class="f">Sin registros todavía.</p>'}`}
 let DU=[[],[]];const duInit=()=>{DU=[['','','',''],['','','','']]};
 function stat(a){a=a.map(pf).filter(isFinite);const n=a.length;if(!n)return null;const m=a.reduce((p,c)=>p+c)/n;return{m,sd:n>1?Math.sqrt(a.reduce((p,c)=>p+(c-m)*(c-m),0)/(n-1)):NaN,n}}
 function duSum(){const s=[stat(DU[0]),stat(DU[1])];if(!s[0]&&!s[1])return NaN;const L=(t,u,x)=>x?t+': media '+fmt(x.m,2)+' '+u+' · desv. std '+fmt(x.sd,2):null;return{r:(s[1]||s[0]).m,ex:[L('Fuerza','N',s[0]),L('R. mec','MPa',s[1])].filter(Boolean)}}
@@ -187,14 +187,17 @@ const U={cero:0,uno:1,dos:2,tres:3,cuatro:4,cinco:5,seis:6,siete:7,ocho:8,nueve:
 function chunk(a,k){let v=0,got=false;
  if(has(HN,a[k])){v+=HN[a[k]];k++;got=true}
  if(has(TN,a[k])){v+=TN[a[k]];k++;got=true;if(a[k]==='y'&&has(U,a[k+1])&&U[a[k+1]]>0&&U[a[k+1]]<10){v+=U[a[k+1]];k+=2}}
- else if(has(U,a[k])){if(a[k]==='cero'){if(got)return[v,k];return[0,k+1]}v+=U[a[k]];k++;got=true}
+ else if(a[k]==='veinti'&&has(U,a[k+1])&&U[a[k+1]]>0&&U[a[k+1]]<10){v+=20+U[a[k+1]];k+=2;got=true}
+ else if(has(U,a[k])){if(a[k]==='cero'){if(got)return[v,k];return[0,k+1]}if(a[k]==='veinte'&&a[k+1]==='y'&&has(U,a[k+2])&&U[a[k+2]]>0&&U[a[k+2]]<10){v+=20+U[a[k+2]];k+=3;got=true}else{v+=U[a[k]];k++;got=true}}
  else if(got&&/^\d{1,2}$/.test(a[k]||'')){v+=+a[k];k++}
  return got?[v,k]:null}
 function wn(a,i){let k=i,tot=0;const c=chunk(a,k);
  if(c&&a[c[1]]==='mil'){tot=(c[0]||1)*1000;k=c[1]+1}else if(a[k]==='mil'){tot=1000;k++}else return c;
  const r=chunk(a,k);if(r&&a[k]!=='cero'){tot+=r[0];k=r[1]}return[tot,k]}
-function norm(t){t=nz(t);const a=t.split(/\s+/).filter(Boolean),c=a.map(x=>x.replace(/[.,;:!?]+$/,'')),o=[];
- for(let i=0;i<a.length;){const r=(has(U,c[i])||has(TN,c[i])||has(HN,c[i])||c[i]==='mil')?wn(c,i):null;if(r){o.push(String(r[0]));i=r[1]}else{o.push(a[i]);i++}}
+const AL={ciete:'siete',sinco:'cinco',ceis:'seis',sies:'seis',nuebe:'nueve',sincuenta:'cincuenta',cinquenta:'cincuenta'},NW=Object.keys(U).concat(Object.keys(TN),Object.keys(HN));
+function fz(w){if(has(AL,w))return AL[w];if(w.length<6||/\d/.test(w)||w==='veinti'||has(U,w)||has(TN,w)||has(HN,w))return w;const d=w.length>=10?2:1;for(const k of NW)if(k.length>=6&&Math.abs(k.length-w.length)<=d&&lev(w,k)<=d)return k;return w}
+function norm(t){t=nz(t);const a=t.split(/\s+/).filter(Boolean),c=a.map(x=>fz(x.replace(/[.,;:!?]+$/,''))),o=[];
+ for(let i=0;i<a.length;){const r=(has(U,c[i])||has(TN,c[i])||has(HN,c[i])||c[i]==='mil'||c[i]==='veinti')?wn(c,i):null;if(r){o.push(String(r[0]));i=r[1]}else{o.push(a[i]);i++}}
  t=o.join(' ').replace(/(\d)[.,](\d)/g,'$1#$2');
  return t.replace(/(\d+)\s+(?:coma|punto|con|como)\s+(\d+(?:\s\d(?!\d|\s+(?:coma|punto|con|como)))*)/g,(m,a,b)=>a+'#'+b.replace(/\s/g,''))}
 const fmtN=n=>String(n).replace('.',',');
@@ -224,7 +227,7 @@ const done=()=>calc.f.every(x=>$('i-'+x[0]).value!=='');
 const nxt=()=>calc.f.find(x=>!$('i-'+x[0]).value);
 const gp=()=>{if(calc.id!=='gra'||!lf||!/^t\d$/.test(lf))return '';const r=R(calc.c(vals())).rows[+lf[1]];return r&&isFinite(r[1])?' '+fmtN(fmt(r[1],2))+' por ciento.':''};
 const ack=v=>{if(done())return v+'.'+gp()+' Datos completos. '+(resText()||'');const e=nxt();return v+'.'+gp()+' Siguiente: '+lab(e[0])+'.'};
-function intro(){if(calc.tbl)return 'Cargamos '+tcn()+', hacia abajo. Pieza '+((nrow(TC)<0?TB.length:nrow(TC))+1)+'. Al terminar la columna decí listo.';if(calc.duo)return 'Fuerza, pieza 1.';const e=nxt();return e?'Primer dato: '+lab(e[0])+'.':'Ya están todos los datos.'}
+function intro(){if(calc.rowwise){const fl=TB.flat().findIndex(x=>x==='');return fl<0?'Ya están todos los datos.':'Rechazo '+((fl>>1)+1)+'. '+(fl&1?'Peso del rechazo.':'Densidad.')}if(calc.tbl)return 'Cargamos '+tcn()+', hacia abajo. Pieza '+((nrow(TC)<0?TB.length:nrow(TC))+1)+'. Al terminar la columna decí listo.';if(calc.duo)return 'Fuerza, pieza 1.';const e=nxt();return e?'Primer dato: '+lab(e[0])+'.':'Ya están todos los datos.'}
 function setStd(t,nums,del){
  const rel=/\b(mas|suma|sumale|sumar)\b/.test(t)?1:/\b(menos|resta|restale|restar)\b/.test(t)?-1:0;
  const chg=del||rel||/\b(cambia|cambialo|cambiar|corregi|corregir|modifica|ese|eso|esa)\b/.test(t);
@@ -253,13 +256,14 @@ function fillT(t,nums){
  const pm=t.match(/pieza (\d+)/);const row=pm?+pm[1]-1:null;if(pm){const i=nums.indexOf(pm[1]);if(i>=0)nums.splice(i,1)}
  const cl=/\b(final|pf|df)\b/.test(t)?1:/\b(inicial|pi|di)\b/.test(t)?0:null;if(cl!==null)TC=cl;
  const v=oneVal(nums);if(v===undefined){say('No escuché ningún número.');return}if(v===false){say('Escuché varios números. Decime un solo dato por vez.');return}
- const c=TC;let r=row!==null?row:nrow(c);if(r<0)r=c===1?TB.findIndex(x=>x[1]===''):TB.length;if(r<0)r=TB.length;
+ let c=TC,r;if(calc.rowwise&&row===null&&cl===null){const f=TB.flat().findIndex(x=>x==='');if(f<0){say('Ya están todos los datos. Decime pieza y el número para cambiar uno.');return}r=f>>1;c=f&1;TC=c}else{r=row!==null?row:nrow(c);if(r<0)r=c===1?TB.findIndex(x=>x[1]===''):TB.length;if(r<0)r=TB.length}
+ if(calc.rows&&r>=TB.length){say('Hay '+TB.length+' rechazos.');return}
  let grow=false;while(TB.length<=r){TB.push(['','']);grow=true}if(grow)render();
  const old=TB[r][c],id=calc.id;UN.push(()=>{if(calc&&calc.id===id){TB[r][c]=old;const x=inp('#m table input')[r*2+c];if(x)x.value=old;upd()}});
  TB[r][c]=fmtN(v);const e=inp('#m table input')[r*2+c];if(e){e.value=fmtN(v);e.scrollIntoView({block:'center'})}
  upd();const nr=nrow(c);
- const pr=c===1?tvals()[r]:NaN,pt=isFinite(pr)?' Resultado pieza '+(r+1)+': '+fmtN(fmt(pr,2))+' por ciento.':'';
- say(fmtN(v)+'.'+pt+' '+(c===1&&nr<0?'Tabla completa.':'Pieza '+((nr<0?TB.length:nr)+1)+'.'))}
+ if(calc.rowwise){const rv=tvals()[r],fl=TB.flat().findIndex(x=>x==='');say(fmtN(v)+'.'+(c===1&&isFinite(rv)?' Resultado rechazo '+(r+1)+': '+fmtN(fmt(rv,2))+' por ciento.':'')+(fl<0?' Datos completos.':' Siguiente: '+(fl&1?'peso del rechazo':'densidad')+', rechazo '+((fl>>1)+1)+'.'));return}
+ say(fmtN(v)+'. '+(c===1&&nr<0?'Tabla completa. '+(resText()||''):'Pieza '+((nr<0?TB.length:nr)+1)+'.'))}
 function fillD(t,nums){
  const g=/fuerza|newton/.test(t)?0:/resisten|mecanic|\br\b|mpa|rmec|erre/.test(t)?1:(DU[0].some(x=>x==='')?0:1);
  const pm=t.match(/pieza (\d+)/);if(pm){const i=nums.indexOf(pm[1]);if(i>=0)nums.splice(i,1)}
@@ -278,7 +282,7 @@ function handle(raw){setSt('thinking');$('vt').textContent=raw;const t=norm(raw)
  if(pend){const p=pend;pend=null;if(/\b(si|dale|confirmo|ok|adelante|claro|seguro)\b/.test(t))p();else say('Cancelado.');return}
  if(/\b(terminar|termina|terminemos|chau|adios|desactivar|apagar|apaga|fin|basta)\b/.test(t)){say('Hasta luego.',off);return}
  if(!nums.length&&UN.length&&/\b(no|mal|error|me equivoque|corregi)\b/.test(t)){UN.pop()();say('Anulado. Decime de nuevo el dato.');return}
- if(!nums.length&&/\b(listo|termine|ya esta|eso es todo|ya termine)\b/.test(t)){if(tab==='med'&&calc&&calc.tbl&&TC===0&&TB.some(r=>r[0]!=='')){TC=1;const nr=nrow(1);if(nr>=0){say('Ahora '+tcn()+'. Pieza '+(nr+1)+'.');return}}read();return}
+ if(!nums.length&&/\b(listo|termine|ya esta|eso es todo|ya termine)\b/.test(t)){if(tab==='med'&&calc&&calc.tbl&&TC===0&&!calc.rowwise&&TB.some(r=>r[0]!=='')){TC=1;const nr=nrow(1);if(nr>=0){say('Ahora '+tcn()+'. Pieza '+(nr+1)+'.');return}}read();return}
  if(/deshac|anterior|volve|atras/.test(t)&&!nums.length){const f=UN.pop();if(f){f();say('Listo, volví al valor anterior.')}else say('No hay nada que deshacer.');return}
  if(/repet/.test(t)){if(/calcul|resultado|cuenta/.test(t))read();else say(last||'Todavía no dije nada.');return}
  if(/explic|formula|como se calcula/.test(t)){if(tab!=='med'||!calc)say('Abrí primero una medición.');else say(calc.fo?'La fórmula es: '+spk(calc.fo)+'.':'No tengo la fórmula cargada para esta medición.');return}
