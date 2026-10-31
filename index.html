@@ -170,14 +170,22 @@ const STOP=/^(el|la|los|las|de|del|en|al|a|como|que|valor|campo|con|y|e|pone|pon
 const lab=k=>calc.f.find(x=>x[0]===k)[1].replace(/\s*\(.*?\)/g,'');
 const res=()=>{const r=$('rs');return r&&r.textContent!=='—'?' Resultado: '+spk(r.textContent)+'.':''};
 /* ---------- carga de valores ---------- */
-function ff(ws,nums){const L=calc.f.map(f=>[f[0],nz(f[1]).replace(/\(.*?\)/g,'')]);let c=L.filter(f=>ws.every(w=>f[1].includes(w)));
- if(c.length>1&&nums.length>1){const c2=c.filter(f=>new RegExp('\\b'+nums[0]+'\\b').test(f[1]));if(c2.length===1){c=c2;nums.shift()}}return c}
+const UNITS=/^(gramos?|g|milimetros?|mm|centimetros?|cc|ml|mililitros?|mpa|newtons?|n|por|ciento|porciento|porcentaje|pieza|piezas|medicion|campo)$/;
+function lev(a,b){const d=[];for(let i=0;i<=a.length;i++){d[i]=[i];for(let j=1;j<=b.length;j++)d[i][j]=i?0:j}for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[a.length][b.length]}
+function sim(w,l){if(w===l)return 1;if(w.length>=3&&l.length>=3&&(l.startsWith(w)||w.startsWith(l)))return .9;if(w.length>=4&&l.length>=4&&lev(w,l)<=(w.length>6?2:1))return .8;return 0}
+function ff(ws,nums){ws=ws.filter(w=>!UNITS.test(w));if(!ws.length)return[];
+ const L=calc.f.map(f=>[f[0],f[1].replace(/\s*\(.*?\)/g,''),nz(f[1]).replace(/\(.*?\)/g,'').split(/[^a-z0-9<>]+/).filter(Boolean)]);
+ const sc=L.map(f=>({f,s:ws.reduce((a,w)=>a+Math.max(0,...f[2].map(l=>sim(w,l))),0)})),best=Math.max(0,...sc.map(x=>x.s));
+ if(best<=0)return[];let c=sc.filter(x=>x.s>=best-1e-9).map(x=>x.f);
+ if(c.length>1&&nums.length>1){const c2=c.filter(f=>f[2].includes(nums[0]));if(c2.length===1){c=c2;nums.shift()}}
+ if(c.length>1){const ex=c.filter(f=>f[2].every(l=>ws.some(w=>sim(w,l)>=.8)));if(ex.length===1)c=ex}
+ return c.map(f=>[f[0],f[1]])}
 function put(k,val){const el=$('i-'+k),old=el.value,id=calc.id;UN.push(()=>{const e=$('i-'+k);if(calc&&calc.id===id&&e){e.value=old;upd()}});el.value=val===''?'':fmtN(val);upd();lf=k}
 function setStd(t,nums,del){
  const rel=/\b(mas|suma|sumale|sumar)\b/.test(t)?1:/\b(menos|resta|restale|restar)\b/.test(t)?-1:0;
  const ws=t.replace(/\d+(#\d+)?/g,' ').split(/[^a-z]+/).filter(w=>w&&!STOP.test(w)&&!/^(borra|borrar|elimina|quita|saca)$/.test(w));
  let k=null;
- if(ws.length){const c=ff(ws,nums);if(c.length!==1){say(c.length?'Hay varias opciones: '+c.map(x=>x[1].trim()).join(', ')+'. ¿Cuál querés?':'No encontré ese campo en esta medición.');return}k=c[0][0]}
+ if(ws.length){const c=ff(ws,nums);if(c.length!==1){say(c.length?'Hay varias opciones: '+c.map(x=>x[1].trim()).join(', ')+'. ¿Cuál querés?':'No encontré ese campo. Los campos de esta medición son: '+calc.f.slice(0,8).map(x=>x[1].replace(/\s*\(.*?\)/g,'')).join(', ')+'.');return}k=c[0][0]}
  else if(lf&&calc.f.some(x=>x[0]===lf)&&(del||nums.length===1))k=lf;
  if(del){if(!k){say('¿Qué valor querés borrar?');return}put(k,'');say('Borré '+lab(k)+'.');return}
  if(!nums.length){say('No escuché ningún número.');return}
@@ -227,6 +235,7 @@ function handle(raw){setSt('thinking');$('vt').textContent=raw;const t=norm(raw)
   const n=NAV.find(n=>n[0].test(t));
   if(n&&/\b(abri|abre|anda|ir|vamos|mostrame|ve|a|la|el)\b/.test(t)||n){if(!n){say('No encontré esa medición.');return}go('med');open_(n[1]);lf=null;say('Abrí '+calc.n+'.');return}
   if(/calcul|resultado|cuanto|decime|lee/.test(t)){read();return}
+  if(tab==='med'&&calc&&!calc.tbl&&!calc.duo){const ws=t.split(/[^a-z]+/).filter(w=>w&&!STOP.test(w)),c=ws.length?ff(ws,[]):[];if(c.length===1){lf=c[0][0];say('¿Cuánto vale '+c[0][1].trim()+'?');return}}
   say('No te entendí. ¿Podés repetirlo?');return}
  if(tab!=='med'||!calc){const n=NAV.find(n=>n[0].test(t));if(n){go('med');open_(n[1]);lf=null;say('Abrí '+calc.n+'. Decime los valores.');return}say('Primero decime qué medición querés abrir.');return}
  if(calc.tbl)fillT(t,nums);else if(calc.duo)fillD(t,nums);else setStd(t,nums,false)}
