@@ -48,6 +48,7 @@ input,textarea{width:100%;font:17px system-ui;padding:10px;border:1px solid var(
 @keyframes vs{from{transform:scale(.85)}to{transform:scale(1.15)}}
 #vs{font-weight:600;font-size:14px}#vt{color:var(--mu);font-size:14px;min-height:18px;margin-top:2px}#vr{font-size:15px;margin:4px 0 8px;min-height:18px}
 #vx{background:#dc2626;color:#fff;border:0;border-radius:10px;padding:9px 18px;font:600 15px system-ui}
+.gv{font-size:22px;font-weight:700;color:var(--ac)}
 </style></head><body>
 <main id="m"></main>
 <nav><button id="t-cal" onclick="go('cal')"><span>📅</span>Calendario</button><button id="t-med" onclick="go('med')"><span>🧪</span>Mediciones</button></nav>
@@ -60,7 +61,7 @@ const CALCS=[
 {id:'dar',n:'Densidad aparente – Redondas',u:'g/cc',dec:3,f:[['m','Masa (g)'],['d','Diámetro (mm)'],['h1','Altura med. 1 (mm)'],['h2','Altura med. 2 (mm)'],['h3','Altura med. 3 (mm)'],['h4','Altura med. 4 (mm)'],['H','Humedad (%)']],fo:'Vol = π·d²/4·h̄ · Dap = m / Vol · Dap seco = Dap / (1 + H/100)',c:v=>{const h=avg([v.h1,v.h2,v.h3,v.h4]),V=Math.PI*v.d*v.d/4*h/1000,D=v.m/V;return{r:D,ex:['Altura promedio: '+fmt(h)+' mm','Volumen: '+fmt(V,3)+' cc'].concat(isFinite(v.H)?['D. aparente seco: '+fmt(D/(1+v.H/100),3)+' g/cc']:[])}}},
 {id:'dre',n:'Densidad aparente – Rectangulares',u:'g/cc',dec:3,f:[['m','Masa (g)'],['l','Lado corto (mm)'],['a','Lado largo (mm)'],['h1','Altura med. 1 (mm)'],['h2','Altura med. 2 (mm)'],['h3','Altura med. 3 (mm)'],['h4','Altura med. 4 (mm)'],['H','Humedad (%)']],fo:'Vol = corto·largo·h̄ · Dap = m / Vol · Dap seco = Dap / (1 + H/100)',c:v=>{const h=avg([v.h1,v.h2,v.h3,v.h4]),V=v.l*v.a*h/1000,D=v.m/V;return{r:D,ex:['Altura promedio: '+fmt(h)+' mm','Volumen: '+fmt(V,3)+' cc'].concat(isFinite(v.H)?['D. aparente seco: '+fmt(D/(1+v.H/100),3)+' g/cc']:[])}}},
 {id:'abs',n:'Absorción de agua',u:'% (media)',dec:2,tbl:['Pi (g)','Pf (g)'],f:[],fo:'a.a = (Pf − Pi) / Pi · 100',rf:(a,b)=>(b-a)/a*100,c:()=>tsum()},
-{id:'gra',n:'Granulometría',u:'% retenido total',f:[['M','Muestra (g)',200]].concat(MA.map((m,i)=>['t'+i,'Tamiz + muestra '+m+' µm (g)'])),fo:'% malla = (Tamiz+g − Tara tamiz) / Muestra · 100',c:v=>{let s=0;const ex=[];MA.forEach((m,i)=>{const p=(v['t'+i]-T[i])/v.M*100;if(isFinite(p)){s+=p;ex.push(m+': '+fmt(p)+' %')}});return{r:ex.length?s:NaN,ex:ex.length?ex.concat(['Finos/pérdida: '+fmt(100-s)+' %']):[]}}},
+{id:'gra',n:'Granulometría',u:'% retenido total',seq:1,f:[['M','Muestra (g)',200,1]].concat(MA.map((m,i)=>['t'+i,'Tamiz + muestra '+m+' µm (g)'])),fo:'% malla = (Tamiz+g − Tara tamiz) / Muestra · 100',c:v=>{const M=v.M||200;let s=0;const ex=[],rows=MA.map((m,i)=>{const p=(v['t'+i]-T[i])/M*100;if(isFinite(p)){s+=p;ex.push(m+': '+fmt(p,2)+' %')}return[m,p,i]});return{r:ex.length?s:NaN,ex:ex.length?ex.concat(['Finos/pérdida: '+fmt(100-s,2)+' %']):[],rows}}},
 {id:'mec',n:'Resistencia mecánica',u:'',duo:1,f:[],fo:'',c:()=>duSum()},
 {id:'con',n:'Contracción lineal',u:'% (media)',dec:2,tbl:['D. inicial (mm)','D. final (mm)'],f:[],fo:'CL = (Di − Df) / Di · 100',rf:(a,b)=>(a-b)/a*100,c:()=>tsum()},
 {id:'rec',n:'Rechazo de barbotina',u:'% rechazo',dec:2,f:[['d','Densidad (g/cc)'],['pr','Peso rechazo (g)']],fo:'Gr. barbotina = ρ·100 · %CS = 156,33 − 154,6/ρ · Gr. secos = Gr. barbotina · %CS / 100 · Corrector = Gr. secos / 100 · %Rechazo = rechazo / Gr. secos · 100',c:v=>{if(!isFinite(v.d))return NaN;const g=v.d*100,cs=156.33-154.6/v.d,gs=g*cs/100;return{r:v.pr/gs*100,ex:['Volumen barbotina: 100 mL','Gramos barbotina: '+fmt(g,1)+' g','% C.S: '+fmt(cs,1)+' %','Gramos secos: '+fmt(gs,2)+' g','Corrector: '+fmt(gs/100,3)]}}},
@@ -72,7 +73,9 @@ try{S=Object.assign(S,JSON.parse(localStorage.getItem('app')||'{}'))}catch(e){}
 const save=()=>{try{localStorage.setItem('app',JSON.stringify(S))}catch(e){}};
 const fmt=(n,d)=>isFinite(n)?(d?n.toFixed(d):(Math.round(n*1000)/1000).toString()).replace('.',','):'—';
 const key=(y,m,d)=>y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-function go(t){tab=t;calc=null;render()}
+function go(t){if(t!==tab)history.pushState({tab:t,c:null},'');tab=t;calc=null;render()}
+function back(){if(history.state&&history.state.c)history.back();else go('med')}
+addEventListener('popstate',e=>{const q=e.state||{tab:'cal',c:null};if(q.tab==='med'&&!q.c&&!calc&&tab==='med'){history.back();return}tab=q.tab||'cal';calc=null;render()});
 function render(){
  ['cal','med'].forEach(x=>document.getElementById('t-'+x).classList.toggle('on',x===tab));
  const m=document.getElementById('m');m.innerHTML=tab==='cal'?calHTML():(calc?calcHTML():medHTML());m.scrollTop=0;if(calc&&tab==='med')upd()}
@@ -107,29 +110,35 @@ function editDay(k){const s=S.days[k]||{},ev=S.ev[k]||[];
  o.querySelector('#cl').onclick=()=>{delete S.days[k];save();o.remove();render()};
  o.querySelector('#ok').onclick=()=>{S.days[k]={s:sel,note:o.querySelector('#nt').value};save();o.remove();render()}}
 function medHTML(){return `<h1>Mediciones</h1>`+CALCS.map(c=>`<button class="card row" style="width:100%;text-align:left;color:var(--tx);font:600 16px system-ui" onclick="open_('${c.id}')"><span>${c.n}<br><span class="f" style="font-weight:400">${(S.hist[c.id]||[]).length} registros</span></span><span style="color:var(--mu)">›</span></button>`).join('')}
-let TB=[];const tbInit=()=>{TB=Array.from({length:20},()=>['','']);};
+let TB=[],TC=0;const tbInit=()=>{TB=Array.from({length:20},()=>['','']);};
 const pf=s=>parseFloat(String(s).replace(',','.'));
 function tvals(){return TB.map(r=>calc.rf(pf(r[0]),pf(r[1])))}
 function tsum(){const res=tvals().filter(isFinite),n=res.length;if(!n)return NaN;const m=res.reduce((a,b)=>a+b)/n,sd=n>1?Math.sqrt(res.reduce((a,b)=>a+(b-m)*(b-m),0)/(n-1)):NaN;return{r:m,ex:[n+' piezas','Desv. estándar: '+fmt(sd,2),'Mín: '+fmt(Math.min(...res),2)+' · Máx: '+fmt(Math.max(...res),2)]}}
 function rowsUpd(){tvals().forEach((x,i)=>{const e=document.getElementById('r'+i);if(e)e.textContent=isFinite(x)?fmt(x,2):'—'})}
 function tbs(i,j,v){TB[i][j]=v;upd()}
 function tblHTML(){const h=S.hist[calc.id]||[];
- return `<button class="back" onclick="go('med')">‹ Mediciones</button><h1>${calc.n}</h1><div class="card"><div class="f">${calc.fo}</div><table style="width:100%;border-collapse:collapse;margin-top:8px"><tr class="f"><td>#</td><td>${calc.tbl[0]}</td><td>${calc.tbl[1]}</td><td style="text-align:right">Result.</td></tr>${TB.map((r,i)=>`<tr><td class="f">${i+1}</td><td><input inputmode="decimal" value="${r[0]}" oninput="tbs(${i},0,this.value)" style="margin:2px 4px 2px 0;padding:8px"></td><td><input inputmode="decimal" value="${r[1]}" oninput="tbs(${i},1,this.value)" style="margin:2px 4px 2px 0;padding:8px"></td><td id="r${i}" class="f" style="text-align:right">—</td></tr>`).join('')}</table><div class="row" style="margin:10px 0"><button class="g" onclick="TB.push(['','']);render()">+ Pieza</button><button class="g" onclick="tbInit();render()">Limpiar</button></div><div class="res" id="rs">—</div><div class="f" id="ex"></div><div style="margin-top:10px"><button class="b" onclick="sv()">Guardar</button></div></div><h2>Historial</h2>${h.length?h.slice().reverse().slice(0,30).map(x=>`<div class="h"><b>${fmt(x.r,calc.dec)} ${calc.u}</b> <span class="f">· ${x.d}</span>${(x.ex||[]).length?'<br><span class="f">'+x.ex.join(' · ')+'</span>':''}</div>`).join(''):'<p class="f">Sin registros todavía.</p>'}`}
+ return `<button class="back" onclick="back()">‹ Mediciones</button><h1>${calc.n}</h1><div class="card"><div class="f">${calc.fo}</div><table style="width:100%;border-collapse:collapse;margin-top:8px"><tr class="f"><td>#</td><td>${calc.tbl[0]}</td><td>${calc.tbl[1]}</td><td style="text-align:right">Result.</td></tr>${TB.map((r,i)=>`<tr><td class="f">${i+1}</td><td><input inputmode="decimal" value="${r[0]}" oninput="tbs(${i},0,this.value)" style="margin:2px 4px 2px 0;padding:8px"></td><td><input inputmode="decimal" value="${r[1]}" oninput="tbs(${i},1,this.value)" style="margin:2px 4px 2px 0;padding:8px"></td><td id="r${i}" class="f" style="text-align:right">—</td></tr>`).join('')}</table><div class="row" style="margin:10px 0"><button class="g" onclick="TB.push(['','']);render()">+ Pieza</button><button class="g" onclick="tbInit();render()">Limpiar</button></div><div class="res" id="rs">—</div><div class="f" id="ex"></div><div style="margin-top:10px"><button class="b" onclick="sv()">Guardar</button></div></div><h2>Historial</h2>${h.length?h.slice().reverse().slice(0,30).map(x=>hi(x)).join(''):'<p class="f">Sin registros todavía.</p>'}`}
 let DU=[[],[]];const duInit=()=>{DU=[['','','',''],['','','','']]};
 function stat(a){a=a.map(pf).filter(isFinite);const n=a.length;if(!n)return null;const m=a.reduce((p,c)=>p+c)/n;return{m,sd:n>1?Math.sqrt(a.reduce((p,c)=>p+(c-m)*(c-m),0)/(n-1)):NaN,n}}
 function duSum(){const s=[stat(DU[0]),stat(DU[1])];if(!s[0]&&!s[1])return NaN;const L=(t,u,x)=>x?t+': media '+fmt(x.m,2)+' '+u+' · desv. std '+fmt(x.sd,2):null;return{r:(s[1]||s[0]).m,ex:[L('Fuerza','N',s[0]),L('R. mec','MPa',s[1])].filter(Boolean)}}
 function duUpd(){[0,1].forEach(g=>{const x=stat(DU[g]),e=document.getElementById('du'+g);if(e)e.innerHTML=x?'<b>Media: '+fmt(x.m,2)+'</b><br>Desv. std: '+fmt(x.sd,2):'—'})}
 function dus(g,i,v){DU[g][i]=v;duUpd()}
 function duoHTML(){const h=S.hist[calc.id]||[],col=(g,t)=>`<div><b>${t}</b>${[0,1,2,3].map(i=>`<input inputmode="decimal" placeholder="Pieza ${i+1}" value="${DU[g][i]}" oninput="dus(${g},${i},this.value)">`).join('')}<div class="res" style="font-size:20px" id="du${g}">—</div></div>`;
- return `<button class="back" onclick="go('med')">‹ Mediciones</button><h1>${calc.n}</h1><div class="card"><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">${col(0,'Fuerza (N)')}${col(1,'R. mec (MPa)')}</div><div class="row" style="margin-top:12px"><button class="g" onclick="duInit();render()">Limpiar</button><button class="b" onclick="sv()">Guardar</button></div></div><h2>Historial</h2>${h.length?h.slice().reverse().slice(0,30).map(x=>`<div class="h"><span class="f">${x.d}</span>${(x.ex||[]).map(l=>'<br>'+l).join('')}</div>`).join(''):'<p class="f">Sin registros todavía.</p>'}`}
-function open_(id){calc=CALCS.find(c=>c.id===id);if(calc.tbl)tbInit();if(calc.duo)duInit();render()}
+ return `<button class="back" onclick="back()">‹ Mediciones</button><h1>${calc.n}</h1><div class="card"><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">${col(0,'Fuerza (N)')}${col(1,'R. mec (MPa)')}</div><div class="row" style="margin-top:12px"><button class="g" onclick="duInit();render()">Limpiar</button><button class="b" onclick="sv()">Guardar</button></div></div><h2>Historial</h2>${h.length?h.slice().reverse().slice(0,30).map(x=>`<div class="h"><span class="f">${x.d}</span>${(x.ex||[]).map(l=>'<br>'+l).join('')}</div>`).join(''):'<p class="f">Sin registros todavía.</p>'}`}
+function open_(id){calc=CALCS.find(c=>c.id===id);if(calc.tbl){tbInit();TC=0}if(calc.duo)duInit();const q=history.state||{};history[q.c?'replaceState':'pushState']({tab:'med',c:id},'');render()}
 function vals(){const v={};calc.f.forEach(([k])=>v[k]=parseFloat(String(document.getElementById('i-'+k).value).replace(',','.')));return v}
 function calcHTML(){if(calc.tbl)return tblHTML();if(calc.duo)return duoHTML();const h=S.hist[calc.id]||[];
- return `<button class="back" onclick="go('med')">‹ Mediciones</button><h1>${calc.n}</h1><div class="card">${calc.f.map(([k,l,d])=>`<label>${l}<input id="i-${k}" inputmode="decimal" oninput="upd()" value="${d!==undefined?String(d).replace('.',','):''}"></label>`).join('')}<div class="f">${calc.fo}</div><div class="res" id="rs">—</div><div class="f" id="ex"></div><div class="row" style="margin-top:10px"><button class="g" onclick="render()">Limpiar</button><button class="b" onclick="sv()">Guardar</button></div></div><h2>Historial</h2>${h.length?h.slice().reverse().slice(0,30).map(x=>`<div class="h"><b>${fmt(x.r,calc.dec)} ${calc.u}</b> <span class="f">· ${x.d}</span>${(x.ex||[]).length?'<br><span class="f">'+x.ex.join(' · ')+'</span>':''}</div>`).join(''):'<p class="f">Sin registros todavía.</p>'}`}
+ return `<button class="back" onclick="back()">‹ Mediciones</button><h1>${calc.n}</h1><div class="card">${calc.f.map(([k,l,d,fx])=>`<label>${l}${fx?' · fija':''}${/^t\d$/.test(k)?`<b id="p-${k}" style="float:right;font-size:17px;color:var(--ac)"></b>`:''}<input id="i-${k}" inputmode="decimal" oninput="upd()" ${fx?'readonly tabindex="-1" style="opacity:.6"':''} value="${d!==undefined?String(d).replace('.',','):''}"></label>`).join('')}<div class="f">${calc.fo}</div>${calc.id==='gra'?'<div id="ex" style="margin:8px 0"></div><div class="f" id="rs">—</div>':'<div class="res" id="rs">—</div><div class="f" id="ex"></div>'}<div class="row" style="margin-top:10px"><button class="g" onclick="render()">Limpiar</button><button class="b" onclick="sv()">Guardar</button></div></div><h2>Historial</h2>${h.length?h.slice().reverse().slice(0,30).map(x=>hi(x)).join(''):'<p class="f">Sin registros todavía.</p>'}`}
+function hi(x){if(calc.id==='gra'){const e=x.ex||[],fi=e.filter(l=>/^Finos/.test(l)),sv=e.filter(l=>!/^Finos/.test(l));return `<div class="h"><span class="f">${x.d}</span><br><b>${sv.join(' · ')}</b><br><span class="f">Total retenido: ${fmt(x.r,2)} %${fi.length?' · '+fi[0]:''}</span></div>`}
+ return `<div class="h"><b>${fmt(x.r,calc.dec)} ${calc.u}</b> <span class="f">· ${x.d}</span>${(x.ex||[]).length?'<br><span class="f">'+x.ex.join(' · ')+'</span>':''}</div>`}
+function graUpd(o){const ex=document.getElementById('ex'),rs=document.getElementById('rs');
+ ex.innerHTML='<table style="width:100%;border-collapse:collapse">'+o.rows.map(([m,p])=>`<tr><td class="f" style="padding:4px 0">${m} µm</td><td class="gv" style="text-align:right">${isFinite(p)?fmt(p,2)+' %':'—'}</td></tr>`).join('')+'</table>';
+ rs.textContent=isFinite(o.r)?'Total retenido: '+fmt(o.r,2)+' % · Finos/pérdida: '+fmt(100-o.r,2)+' %':'—';
+ o.rows.forEach(([m,p,i])=>{const e=document.getElementById('p-t'+i);if(e)e.textContent=isFinite(p)?fmt(p,2)+' %':''})}
 const R=x=>typeof x==='number'?{r:x,ex:[]}:x;
-function upd(){if(calc.duo)return duUpd();const o=R(calc.c(vals()));if(calc.tbl)rowsUpd();document.getElementById('rs').textContent=isFinite(o.r)?fmt(o.r,calc.dec)+' '+calc.u:'—';document.getElementById('ex').innerHTML=o.ex.map(l=>/^D\. aparente seco/.test(l)?'<div class="sec">'+l+'</div>':l).join('<br>')}
+function upd(){if(calc.duo)return duUpd();const o=R(calc.c(vals()));if(calc.tbl)rowsUpd();if(calc.id==='gra')return graUpd(o);document.getElementById('rs').textContent=isFinite(o.r)?fmt(o.r,calc.dec)+' '+calc.u:'—';document.getElementById('ex').innerHTML=o.ex.map(l=>/^D\. aparente seco/.test(l)?'<div class="sec">'+l+'</div>':l).join('<br>')}
 function sv(){const o=R(calc.c(vals())),r=o.r;if(!isFinite(r))return;(S.hist[calc.id]=S.hist[calc.id]||[]).push({r,ex:o.ex,d:new Date().toLocaleString('es',{dateStyle:'short',timeStyle:'short'})});save();render()}
-render();
+history.replaceState({tab:'cal',c:null},'');render();
 </script>
 <script>
 (()=>{
@@ -163,15 +172,27 @@ async function start(){if(!SR){pn.style.display='block';fail('Este navegador no 
 fab.onclick=start;$('vx').onclick=off;$('vo').onclick=()=>{if(st==='speaking')TTS.cancel()};
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&on)off()});
 /* ---------- números y texto ---------- */
-const W={cero:0,uno:1,dos:2,tres:3,cuatro:4,cinco:5,seis:6,siete:7,ocho:8,nueve:9,diez:10,once:11,doce:12,trece:13,catorce:14,quince:15,dieciseis:16,diecisiete:17,dieciocho:18,diecinueve:19,veinte:20,veintiuno:21,veintidos:22,veintitres:23,veinticuatro:24,veinticinco:25,veintiseis:26,veintisiete:27,veintiocho:28,veintinueve:29,treinta:30,cuarenta:40,cincuenta:50,sesenta:60,setenta:70,ochenta:80,noventa:90,cien:100};
-function norm(t){t=nz(t).replace(/\b(treinta|cuarenta|cincuenta|sesenta|setenta|ochenta|noventa) y ([a-z]+)\b/g,(m,a,b)=>W[b]<10?W[a]+W[b]:m);
- t=t.replace(/\b[a-z]+\b/g,w=>W[w]!==undefined?W[w]:w).replace(/(\d)[.,](\d)/g,'$1#$2');
+const U={cero:0,uno:1,dos:2,tres:3,cuatro:4,cinco:5,seis:6,siete:7,ocho:8,nueve:9,diez:10,once:11,doce:12,trece:13,catorce:14,quince:15,dieciseis:16,diecisiete:17,dieciocho:18,diecinueve:19,veinte:20,veintiuno:21,veintidos:22,veintitres:23,veinticuatro:24,veinticinco:25,veintiseis:26,veintisiete:27,veintiocho:28,veintinueve:29},TN={treinta:30,cuarenta:40,cincuenta:50,sesenta:60,setenta:70,ochenta:80,noventa:90},HN={cien:100,ciento:100,doscientos:200,doscientas:200,trescientos:300,trescientas:300,cuatrocientos:400,cuatrocientas:400,quinientos:500,quinientas:500,seiscientos:600,seiscientas:600,setecientos:700,setecientas:700,ochocientos:800,ochocientas:800,novecientos:900,novecientas:900},has=(o,k)=>Object.prototype.hasOwnProperty.call(o,k);
+function chunk(a,k){let v=0,got=false;
+ if(has(HN,a[k])){v+=HN[a[k]];k++;got=true}
+ if(has(TN,a[k])){v+=TN[a[k]];k++;got=true;if(a[k]==='y'&&has(U,a[k+1])&&U[a[k+1]]>0&&U[a[k+1]]<10){v+=U[a[k+1]];k+=2}}
+ else if(has(U,a[k])){if(a[k]==='cero'){if(got)return[v,k];return[0,k+1]}v+=U[a[k]];k++;got=true}
+ else if(got&&/^\d{1,2}$/.test(a[k]||'')){v+=+a[k];k++}
+ return got?[v,k]:null}
+function wn(a,i){let k=i,tot=0;const c=chunk(a,k);
+ if(c&&a[c[1]]==='mil'){tot=(c[0]||1)*1000;k=c[1]+1}else if(a[k]==='mil'){tot=1000;k++}else return c;
+ const r=chunk(a,k);if(r&&a[k]!=='cero'){tot+=r[0];k=r[1]}return[tot,k]}
+function norm(t){t=nz(t);const a=t.split(/\s+/).filter(Boolean),c=a.map(x=>x.replace(/[.,;:!?]+$/,'')),o=[];
+ for(let i=0;i<a.length;){const r=(has(U,c[i])||has(TN,c[i])||has(HN,c[i])||c[i]==='mil')?wn(c,i):null;if(r){o.push(String(r[0]));i=r[1]}else{o.push(a[i]);i++}}
+ t=o.join(' ').replace(/(\d)[.,](\d)/g,'$1#$2');
  return t.replace(/(\d+)\s+(?:coma|punto|con|como)\s+(\d+(?:\s\d(?!\d|\s+(?:coma|punto|con|como)))*)/g,(m,a,b)=>a+'#'+b.replace(/\s/g,''))}
 const fmtN=n=>String(n).replace('.',',');
 const spk=s=>s.replace('.',',').replace('%',' por ciento').replace('g/cc',' gramos por centímetro cúbico').replace(/·/g,' por ').replace(/−/g,' menos ').replace('ρ','densidad').replace(/ \/ /g,' dividido ');
 const STOP=/^(el|la|los|las|de|del|en|al|a|como|que|valor|campo|con|y|e|pone|poner|pon|carga|cargar|ingresa|ingresar|anota|anotar|cambia|cambialo|cambiar|es|son|numero|mas|menos|suma|sumale|sumar|resta|restale|restar|igual|ese|eso|esa|lo|primer|primero|segundo|tercero|cuarto|quinto|sexto|septimo|octavo|noveno|decimo|siguiente|proximo|dato|datos|corregi|corregir|modifica)$/;
-const lab=k=>calc.f.find(x=>x[0]===k)[1].replace(/\s*\(.*?\)/g,'');
+const mm=l=>l[0]==='>'?'mayor a '+l.slice(1):l[0]==='<'?'menor a '+l.slice(1):l.replace('-',' a ');
+const lab=k=>{if(calc.id==='gra'&&/^t\d$/.test(k)){const i=+k[1];return 'Tamiz '+(i+1)+', '+mm(MA[i])+' micrones'}return calc.f.find(x=>x[0]===k)[1].replace(/\s*\(.*?\)/g,'')};
 function resText(){if(tab!=='med'||!calc)return null;
+ if(calc.id==='gra'){const o=R(calc.c(vals())),a=o.rows.filter(x=>isFinite(x[1])).map(x=>'Tamiz '+(x[2]+1)+', '+mm(x[0])+': '+spk(fmt(x[1],2))+' por ciento');return a.length?a.join('. ')+'. Total retenido '+spk(fmt(o.r,2))+' por ciento.':null}
  if(calc.duo){const a=[0,1].map(g=>{const e=$('du'+g);return e&&e.textContent!=='—'?(g?'R mec: ':'Fuerza: ')+spk(e.innerText.replace(/\n/g,', ').replace('Desv. std','desviación estándar')):''}).filter(Boolean);return a.length?a.join('. ')+'.':null}
  const r=$('rs');if(!r||r.textContent==='—')return null;const ex=$('ex').innerText.trim().replace(/\n+/g,'. ');return 'El resultado es '+spk(r.textContent)+'.'+(ex?' '+spk(ex)+'.':'')}
 /* ---------- carga de valores ---------- */
@@ -189,18 +210,22 @@ function put(k,val){const el=$('i-'+k),old=el.value,id=calc.id;UN.push(()=>{cons
 const ORD={primer:0,primero:0,segundo:1,tercero:2,cuarto:3,quinto:4,sexto:5,septimo:6,octavo:7,noveno:8,decimo:9};
 const done=()=>calc.f.every(x=>$('i-'+x[0]).value!=='');
 const nxt=()=>calc.f.find(x=>!$('i-'+x[0]).value);
-const ack=v=>{if(done())return v+'. Datos completos. '+(resText()||'');const e=nxt();return v+'. Siguiente: '+lab(e[0])+'.'};
-function intro(){if(calc.tbl)return 'Pieza 1.';if(calc.duo)return 'Decime la fuerza o la R mec.';const e=nxt();return e?'Primer dato: '+lab(e[0])+'.':'Ya están todos los datos.'}
+const gp=()=>{if(calc.id!=='gra'||!lf||!/^t\d$/.test(lf))return '';const r=R(calc.c(vals())).rows[+lf[1]];return r&&isFinite(r[1])?' '+fmtN(fmt(r[1],2))+' por ciento.':''};
+const ack=v=>{if(done())return v+'.'+gp()+' Datos completos. '+(resText()||'');const e=nxt();return v+'.'+gp()+' Siguiente: '+lab(e[0])+'.'};
+function intro(){if(calc.tbl)return 'Cargamos '+tcn()+', hacia abajo. Pieza 1. Al terminar la columna decí listo.';if(calc.duo)return 'Fuerza, pieza 1.';const e=nxt();return e?'Primer dato: '+lab(e[0])+'.':'Ya están todos los datos.'}
 function setStd(t,nums,del){
  const rel=/\b(mas|suma|sumale|sumar)\b/.test(t)?1:/\b(menos|resta|restale|restar)\b/.test(t)?-1:0;
  const chg=del||rel||/\b(cambia|cambialo|cambiar|corregi|corregir|modifica|ese|eso|esa)\b/.test(t);
  const od=t.match(/\b(primer|primero|segundo|tercero|cuarto|quinto|sexto|septimo|octavo|noveno|decimo)\b/),sg=/\b(siguiente|proximo)\b/.test(t);
- const ws=t.replace(/\d+(#\d+)?/g,' ').split(/[^a-z]+/).filter(w=>w&&!STOP.test(w)&&!/^(borra|borrar|elimina|quita|saca)$/.test(w));
- let k=null;
+ const tm=calc.seq&&t.match(/\btamiz\s+(\d+)\b/);if(tm){const i=nums.indexOf(tm[1]);if(i>=0)nums.splice(i,1)}
+ const ws=calc.seq?[]:t.replace(/\d+(#\d+)?/g,' ').split(/[^a-z]+/).filter(w=>w&&!STOP.test(w)&&!/^(borra|borrar|elimina|quita|saca)$/.test(w));
+ let k=null;if(tm&&calc.f[+tm[1]])k=calc.f[+tm[1]][0];
  if(ws.length){const c=ff(ws,nums);if(c.length!==1){say(c.length?'Hay varias opciones: '+c.map(x=>x[1].trim()).join(', ')+'. ¿Cuál querés?':'No encontré ese campo. Los campos de esta medición son: '+calc.f.slice(0,8).map(x=>x[1].replace(/\s*\(.*?\)/g,'')).join(', ')+'.');return}k=c[0][0]}
- else if(od&&calc.f[ORD[od[1]]])k=calc.f[ORD[od[1]]][0];
+ else if(k){}
+ else if(od&&calc.f[ORD[od[1]]+(calc.seq?1:0)])k=calc.f[ORD[od[1]]+(calc.seq?1:0)][0];
  else if(sg){const i=calc.f.findIndex(x=>x[0]===lf),e=calc.f[i+1]||nxt();if(e)k=e[0]}
  else if(chg&&lf&&calc.f.some(x=>x[0]===lf))k=lf;
+ if(k&&calc.f.find(x=>x[0]===k)[3]){say('La muestra es fija: 200 gramos.');return}
  if(del){if(!k){say('¿Qué valor querés borrar?');return}put(k,'');say('Borré '+lab(k)+'.');return}
  if(!nums.length){say('No escuché ningún número.');return}
  if(nums.length>1){if(nums.every(x=>!x.includes('.')))nums=[nums[0]+'.'+nums.slice(1).join('')];else{say('Escuché varios números. Decime un solo dato por vez.');return}}
@@ -209,26 +234,30 @@ function setStd(t,nums,del){
  nums.forEach(x=>{const e=em()[0];if(e){put(e[0],+x);n++}});
  say(n?ack(nums.slice(0,n).map(fmtN).join(' y ')):'Ya no quedan campos vacíos. Decime qué campo querés cambiar.')}
 const inp=sel=>[...document.querySelectorAll(sel)];
+const oneVal=n=>!n.length?undefined:n.length===1?n[0]:n.every(x=>!x.includes('.'))?n[0]+'.'+n.slice(1).join(''):false;
+const tcn=()=>calc.tbl[TC].replace(/\s*\(.*?\)/g,'');
+const nrow=c=>c===1?TB.findIndex(x=>x[0]!==''&&x[1]===''):TB.findIndex(x=>x[0]==='');
 function fillT(t,nums){
- const pm=t.match(/pieza (\d+)/);let row=pm?+pm[1]-1:null;if(pm){const i=nums.indexOf(pm[1]);if(i>=0)nums.splice(i,1)}
- if(!nums.length){say('No escuché ningún número.');return}
- const col=/\b(final|pf|df)\b/.test(t)?1:/\b(inicial|pi|di)\b/.test(t)?0:null;
- let grow=false;const need=r=>{while(TB.length<=r){TB.push(['','']);grow=true}};
- const pos=[];let flat=row!==null?row*2:TB.findIndex(x=>x[0]===''||x[1]==='')*2;if(flat<0)flat=TB.length*2;
- nums.forEach(n=>{let r,c;if(col!==null){r=row!==null?row:TB.findIndex(x=>x[col]==='');if(r<0)r=TB.length;c=col;row=null;if(pos.some(p=>p[0]===r&&p[1]===c))r++;}else{r=Math.floor(flat/2);c=flat%2;flat++}need(r);pos.push([r,c,n])});
- if(grow)render();
- pos.forEach(([r,c,n])=>{const old=TB[r][c],id=calc.id;UN.push(()=>{if(calc&&calc.id===id){TB[r][c]=old;const x=inp('#m table input')[r*2+c];if(x)x.value=old;upd()}});TB[r][c]=fmtN(n);const e=inp('#m table input')[r*2+c];if(e)e.value=fmtN(n)});
- upd();const l=pos[pos.length-1],e=inp('#m table input')[l[0]*2+l[1]];if(e)e.scrollIntoView({block:'center'});
- const nx=TB.findIndex(x=>x[0]===''||x[1]==='');say(nums.map(fmtN).join(' y ')+'. '+(nx>=0?'Pieza '+(nx+1)+'.':'Tabla completa. '+(resText()||'')))}
+ const pm=t.match(/pieza (\d+)/);const row=pm?+pm[1]-1:null;if(pm){const i=nums.indexOf(pm[1]);if(i>=0)nums.splice(i,1)}
+ const cl=/\b(final|pf|df)\b/.test(t)?1:/\b(inicial|pi|di)\b/.test(t)?0:null;if(cl!==null)TC=cl;
+ const v=oneVal(nums);if(v===undefined){say('No escuché ningún número.');return}if(v===false){say('Escuché varios números. Decime un solo dato por vez.');return}
+ const c=TC;let r=row!==null?row:nrow(c);if(r<0)r=c===1?TB.findIndex(x=>x[1]===''):TB.length;if(r<0)r=TB.length;
+ let grow=false;while(TB.length<=r){TB.push(['','']);grow=true}if(grow)render();
+ const old=TB[r][c],id=calc.id;UN.push(()=>{if(calc&&calc.id===id){TB[r][c]=old;const x=inp('#m table input')[r*2+c];if(x)x.value=old;upd()}});
+ TB[r][c]=fmtN(v);const e=inp('#m table input')[r*2+c];if(e){e.value=fmtN(v);e.scrollIntoView({block:'center'})}
+ upd();const nr=nrow(c);
+ say(fmtN(v)+'. '+(c===1&&nr<0?'Tabla completa. '+(resText()||''):'Pieza '+((nr<0?TB.length:nr)+1)+'.'))}
 function fillD(t,nums){
  const g=/fuerza|newton/.test(t)?0:/resisten|mecanic|\br\b|mpa|rmec|erre/.test(t)?1:(DU[0].some(x=>x==='')?0:1);
  const pm=t.match(/pieza (\d+)/);if(pm){const i=nums.indexOf(pm[1]);if(i>=0)nums.splice(i,1)}
- if(!nums.length){say('No escuché ningún número.');return}
- nums=nums.map(x=>g===0&&/^\d{1,3}\.\d{3}$/.test(x)?x.replace('.',''):x);
- const slots=pm?[+pm[1]-1]:DU[g].map((x,i)=>x===''?i:-1).filter(i=>i>=0);let n=0;
- nums.forEach((x,j)=>{const i=pm?slots[0]:slots[j];if(i===undefined||i>3)return;const old=DU[g][i],id=calc.id;UN.push(()=>{if(calc&&calc.id===id){DU[g][i]=old;const e=inp('#m input')[g*4+i];if(e)e.value=old;duUpd()}});DU[g][i]=fmtN(x);const e=inp('#m input')[g*4+i];if(e)e.value=fmtN(x);n++});
+ let v=oneVal(nums);if(v===undefined){say('No escuché ningún número.');return}if(v===false){say('Escuché varios números. Decime un solo dato por vez.');return}
+ if(g===0&&/^\d{1,2}\.\d{3}$/.test(v))v=v.replace('.','');
+ const i=pm?+pm[1]-1:DU[g].findIndex(x=>x==='');
+ if(i<0||i>3){say(pm?'Las piezas van de 1 a 4.':'No quedan huecos libres, usá "pieza" y el número para cambiar uno.');return}
+ const old=DU[g][i],id=calc.id;UN.push(()=>{if(calc&&calc.id===id){DU[g][i]=old;const e=inp('#m input')[g*4+i];if(e)e.value=old;duUpd()}});
+ DU[g][i]=fmtN(v);const e=inp('#m input')[g*4+i];if(e)e.value=fmtN(v);
  duUpd();const all=DU[0].every(x=>x!=='')&&DU[1].every(x=>x!==''),ng=DU[g].findIndex(x=>x==='')>=0?g:1-g,ni=DU[ng].findIndex(x=>x==='');
- say(n?nums.map(fmtN).join(' y ')+'. '+(all?'Datos completos. '+(resText()||''):'Siguiente: '+(ng?'R mec':'fuerza')+' pieza '+(ni+1)+'.'):'No quedan huecos libres, usá "pieza" y el número para cambiar uno.')}
+ say(fmtN(v)+'. '+(all?'Datos completos. '+(resText()||''):'Siguiente: '+(ng?'R mec':'fuerza')+' pieza '+(ni+1)+'.'))}
 function read(){const x=resText();say(tab!=='med'||!calc?'No hay ninguna medición abierta.':x||'Todavía faltan datos para calcular.')}
 /* ---------- intérprete ---------- */
 const NAV=[[/redond/,'dar'],[/rectang/,'dre'],[/absorc|\ba\.?a\b/,'abs'],[/granul/,'gra'],[/resisten|mecanic/,'mec'],[/contrac/,'con'],[/rechazo|barbotina/,'rec'],[/atomiz/,'ata'],[/humedad/,'hum']];
@@ -236,7 +265,7 @@ function handle(raw){setSt('thinking');$('vt').textContent=raw;const t=norm(raw)
  if(pend){const p=pend;pend=null;if(/\b(si|dale|confirmo|ok|adelante|claro|seguro)\b/.test(t))p();else say('Cancelado.');return}
  if(/\b(terminar|termina|terminemos|chau|adios|desactivar|apagar|apaga|fin|basta)\b/.test(t)){say('Hasta luego.',off);return}
  if(!nums.length&&UN.length&&/\b(no|mal|error|me equivoque|corregi)\b/.test(t)){UN.pop()();say('Anulado. Decime de nuevo el dato.');return}
- if(!nums.length&&/\b(listo|termine|ya esta|eso es todo|ya termine)\b/.test(t)){read();return}
+ if(!nums.length&&/\b(listo|termine|ya esta|eso es todo|ya termine)\b/.test(t)){if(tab==='med'&&calc&&calc.tbl&&TC===0&&TB.some(r=>r[0]!=='')){TC=1;const nr=nrow(1);if(nr>=0){say('Ahora '+tcn()+'. Pieza '+(nr+1)+'.');return}}read();return}
  if(/deshac|anterior|volve|atras/.test(t)&&!nums.length){const f=UN.pop();if(f){f();say('Listo, volví al valor anterior.')}else say('No hay nada que deshacer.');return}
  if(/repet/.test(t)){if(/calcul|resultado|cuenta/.test(t))read();else say(last||'Todavía no dije nada.');return}
  if(/explic|formula|como se calcula/.test(t)){if(tab!=='med'||!calc)say('Abrí primero una medición.');else say(calc.fo?'La fórmula es: '+spk(calc.fo)+'.':'No tengo la fórmula cargada para esta medición.');return}
