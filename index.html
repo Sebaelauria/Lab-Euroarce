@@ -203,6 +203,7 @@ function setStd(t,nums,del){
  else if(chg&&lf&&calc.f.some(x=>x[0]===lf))k=lf;
  if(del){if(!k){say('¿Qué valor querés borrar?');return}put(k,'');say('Borré '+lab(k)+'.');return}
  if(!nums.length){say('No escuché ningún número.');return}
+ if(nums.length>1){if(nums.every(x=>!x.includes('.')))nums=[nums[0]+'.'+nums.slice(1).join('')];else{say('Escuché varios números. Decime un solo dato por vez.');return}}
  if(k){let v=+nums[0];if(rel){const cur=parseFloat(String($('i-'+k).value).replace(',','.'))||0;v=Math.round((cur+rel*v)*1e6)/1e6}put(k,v);say(ack(fmtN(v)));return}
  const em=()=>calc.f.filter(x=>!$('i-'+x[0]).value);let n=0;
  nums.forEach(x=>{const e=em()[0];if(e){put(e[0],+x);n++}});
