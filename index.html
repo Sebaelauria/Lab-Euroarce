@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Lab Euroarce</title><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#16a34a"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Mi App"><link rel="apple-touch-icon" href="icon-192.png">
+<title>Lab Euroarce</title><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#16a34a"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Lab Euroarce"><link rel="apple-touch-icon" href="icon-192.png">
 <style>
 :root{--bg:#fff;--sf:#fff;--tx:#0f1f17;--mu:#6b7d73;--bd:#e1ece5;--ac:#16a34a;--M:#f59e0b;--T:#0ea5e9;--N:#6366f1;--L:#10b981;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
 *{box-sizing:border-box}html,body{height:100%;margin:0}
@@ -59,7 +59,21 @@ input,textarea{width:100%;font:17px system-ui;padding:10px;border:1px solid var(
 .mc i{width:46px;height:46px;border-radius:15px;background:#ecfdf3;display:grid;place-items:center;font-style:normal;font-size:23px}
 .mc b{font:600 15px/1.25 system-ui}.mc .f{color:var(--ac);font-weight:600}
 h1{letter-spacing:-.3px}
-.sheet>div{max-height:88vh;overflow-y:auto}.tk{display:flex;gap:10px;align-items:center;color:var(--tx);font-size:15px;margin:0 0 8px}.grid{touch-action:pan-y}</style></head><body>
+.sheet>div{max-height:88vh;overflow-y:auto}.tk{display:flex;gap:10px;align-items:center;color:var(--tx);font-size:15px;margin:0 0 8px}.grid{touch-action:pan-y}
+.mh{display:flex;justify-content:space-between;align-items:flex-end;margin:2px 2px 14px}
+.mh h1{margin:0;font-size:27px;letter-spacing:-.7px}.mh .f{margin:0;text-transform:uppercase;letter-spacing:1.5px;font-size:10.5px;font-weight:700;color:var(--ac)}
+.mdt{font:600 12px system-ui;color:var(--ac);background:#ecfdf3;border-radius:999px;padding:6px 11px;text-transform:capitalize;white-space:nowrap}
+.mx{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.mt{position:relative;overflow:hidden;aspect-ratio:1/1.18;min-width:0;border:1px solid var(--bd);border-radius:22px;padding:12px 10px;background:radial-gradient(circle at 100% 0,#dcfce7 0,rgba(220,252,231,0) 62%),var(--sf);color:var(--tx);display:flex;flex-direction:column;justify-content:space-between;text-align:left;box-shadow:0 1px 2px rgba(22,101,52,.06),0 8px 16px -10px rgba(22,101,52,.35);animation:mtin .5s cubic-bezier(.2,.8,.2,1) both;transition:transform .12s}
+.mt:active{transform:scale(.95)}.mt.lv{border-color:var(--ac)}
+.mt i{font-style:normal;width:40px;height:40px;border-radius:14px;display:grid;place-items:center;font-size:21px;background:linear-gradient(145deg,#ecfdf3,#bbf7d0)}
+.mt b{display:block;font:700 13px/1.15 system-ui;letter-spacing:-.2px;overflow-wrap:anywhere}
+.mt small{display:block;font:500 10.5px/1.2 system-ui;color:var(--mu);margin-top:3px}.mt.lv small{color:var(--ac);font-weight:700}
+.mt em{position:absolute;top:10px;right:10px;font:700 11px system-ui;font-style:normal;color:#fff;background:var(--ac);border-radius:999px;min-width:20px;padding:2px 6px;text-align:center}
+.mfo{margin:14px 2px 0;text-align:center}
+@keyframes mtin{from{opacity:0;transform:translateY(12px) scale(.94)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.mt{animation:none}}
+</style></head><body>
 <main id="m"></main>
 <nav><button id="t-med" onclick="go('med')"><span>🧪</span>Mediciones</button><button id="t-cal" onclick="go('cal')"><span>📅</span>Calendario</button></nav>
 <script>
@@ -139,7 +153,10 @@ function editDay(k){SD=k;const s=S.days[k]||{},ev=S.ev[k]||[];
  o.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{sel=b.dataset.c;pt();o.querySelectorAll('[data-c]').forEach(x=>x.classList.toggle('on',x===b))});
  o.querySelector('#cl').onclick=()=>{delete S.days[k];save();o.remove();render()};
  o.querySelector('#ok').onclick=()=>{S.noal=S.noal||{};if(o.querySelector('#alk').checked)delete S.noal[k];else S.noal[k]=true;S.days[k]={s:sel,note:o.querySelector('#nt').value};save();o.remove();render()}}
-function medHTML(){const IC={'dar': '⚪', 'dre': '⬜', 'abs': '💧', 'gra': '🔬', 'mec': '🔨', 'con': '📏', 'rec': '🧪', 'ata': '🌫️', 'hum': '💦'};return `<h1>Mediciones</h1><div class="mg">`+CALCS.map(c=>{const n=(S.hist[c.id]||[]).length;return `<button class="mc" onclick="open_('${c.id}')"><i>${IC[c.id]||'🧪'}</i><b>${c.n}</b><span class="f">${n} ${n===1?'registro':'registros'}</span></button>`}).join('')+`</div>`}
+function medHTML(){const IC={dar:'⚪',dre:'⬜',abs:'💧',gra:'🔬',mec:'🔨',con:'📏',rec:'🧪',ata:'🌫️',hum:'💦'},NM={dar:['Dens. redondas','densidad aparente'],dre:['Dens. rectang.','densidad aparente'],abs:['Absorción','de agua'],gra:['Granulometría','por tamices'],mec:['Resistencia','mecánica'],con:['Contracción','lineal'],rec:['Rechazo','de barbotina'],ata:['Atomizado','densidad'],hum:['Humedad','agua a agregar']};
+ const live=c=>{const d=(S.dr||{})[c.id];if(!d)return false;if(d.TB)return d.TB.some(r=>r.some(Boolean));if(d.DU)return d.DU.some(x=>x.some(Boolean));return(c.f||[]).some(f=>!f[3]&&d[f[0]]!==undefined&&d[f[0]]!==''&&d[f[0]]!==(f[2]!==undefined?String(f[2]).replace('.',','):''))};
+ const dt=new Date().toLocaleDateString('es',{weekday:'short',day:'numeric',month:'short'});
+ return `<div class="mh"><div><div class="f">Laboratorio</div><h1>Lab Euroarce</h1></div><div class="mdt">${dt}</div></div><div class="mx">`+CALCS.map((c,i)=>{const n=(S.hist[c.id]||[]).length,nm=NM[c.id]||[c.n,''],lv=live(c);return `<button class="mt ${lv?'lv':''}" style="animation-delay:${i*45}ms" onclick="open_('${c.id}')"><i>${IC[c.id]||'🧪'}</i>${n?`<em>${n}</em>`:''}<span><b>${nm[0]}</b><small>${lv?'● en curso':nm[1]}</small></span></button>`}).join('')+`</div><p class="f mfo">Tocá una medición, o usá el micrófono 🎙️</p>`}
 let TB=[],TC=0;const tbInit=()=>{TB=Array.from({length:(calc&&calc.rows)||20},()=>['','']);};
 const pf=s=>parseFloat(String(s).replace(',','.'));
 function tvals(){return TB.map(r=>calc.rf(pf(r[0]),pf(r[1])))}
