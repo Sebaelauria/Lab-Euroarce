@@ -297,4 +297,4 @@ function handle(raw){setSt('thinking');$('vt').textContent=raw;const t=norm(raw)
  if(tab!=='med'||!calc){const n=NAV.find(n=>n[0].test(t));if(n){go('med');open_(n[1]);lf=null;say('Abrí '+calc.n+'. '+intro());return}say('Primero decime qué medición querés abrir.');return}
  if(calc.tbl)fillT(t,nums);else if(calc.duo)fillD(t,nums);else setStd(t,nums,false)}
 })();
-</script><script>if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));</script></body></html>
+</script><script>if("serviceWorker" in navigator){const had=!!navigator.serviceWorker.controller;let rl=false;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(!had||rl)return;rl=true;location.reload()});addEventListener("load",()=>navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).catch(()=>{}))}</script></body></html>
