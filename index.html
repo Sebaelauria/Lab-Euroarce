@@ -128,14 +128,15 @@ function rowsUpd(){tvals().forEach((x,i)=>{const e=document.getElementById('r'+i
 function tbs(i,j,v){TB[i][j]=v;upd()}
 function tblHTML(){const h=S.hist[calc.id]||[];
  return `<button class="back" onclick="back()">‹ Mediciones</button><h1>${calc.n}</h1><div class="card"><div class="f">${calc.fo}</div><table style="width:100%;border-collapse:collapse;margin-top:8px"><tr class="f"><td>#</td><td>${calc.tbl[0]}</td><td>${calc.tbl[1]}</td><td style="text-align:right"><b>Resultado</b></td></tr>${TB.map((r,i)=>`<tr><td class="f">${i+1}</td><td><input inputmode="decimal" value="${r[0]}" oninput="tbs(${i},0,this.value)" style="margin:2px 4px 2px 0;padding:8px"></td><td><input inputmode="decimal" value="${r[1]}" oninput="tbs(${i},1,this.value)" style="margin:2px 4px 2px 0;padding:8px"></td><td id="r${i}" class="gv" style="text-align:right;white-space:nowrap">—</td></tr>`).join('')}</table><div class="row" style="margin:10px 0">${calc.rows?'':`<button class="g" onclick="TB.push(['','']);render()">+ Pieza</button>`}<button class="g" onclick="tbInit();render()">Limpiar</button></div><div class="f" id="rs" style="display:none"></div><div class="f" id="ex"></div><div style="margin-top:10px"><button class="b" onclick="sv()">Guardar</button></div></div><h2>Historial</h2>${h.length?h.slice().reverse().slice(0,30).map(x=>hi(x)).join(''):'<p class="f">Sin registros todavía.</p>'}`}
-let DU=[[],[]];const duInit=()=>{DU=[['','','',''],['','','','']]};
+let DU=[],REF=['','','',''],CB=0;const duInit=()=>{DU=Array.from({length:12},()=>['','','','']);REF=['','','',''];CB=0};
 function stat(a){a=a.map(pf).filter(isFinite);const n=a.length;if(!n)return null;const m=a.reduce((p,c)=>p+c)/n;return{m,sd:n>1?Math.sqrt(a.reduce((p,c)=>p+(c-m)*(c-m),0)/(n-1)):NaN,n}}
-function duSum(){const s=[stat(DU[0]),stat(DU[1])];if(!s[0]&&!s[1])return NaN;const L=(t,u,x)=>x?t+': media '+fmt(x.m,2)+' '+u+' · desv. std '+fmt(x.sd,2):null;return{r:(s[1]||s[0]).m,ex:[L('Fuerza','N',s[0]),L('R. mec','MPa',s[1])].filter(Boolean)}}
-function duUpd(){if(calc&&calc.duo){(S.dr=S.dr||{})[calc.id]={DU:DU};save()}[0,1].forEach(g=>{const x=stat(DU[g]),e=document.getElementById('du'+g);if(e)e.innerHTML=x?'<b>Media: '+fmt(x.m,2)+'</b><br>Desv. std: '+fmt(x.sd,2):'—'})}
+function duSum(){const ex=[];let r=NaN;for(let b=0;b<4;b++){const s=[0,1,2].map(c=>stat(DU[b*3+c]));if(!s.some(Boolean))continue;const f=(x,u,d)=>x?fmt(x.m,2)+' '+u+(d&&isFinite(x.sd)?' (desv. '+fmt(x.sd,2)+')':''):'—';ex.push('Cuadro '+(b+1)+(REF[b]?' · '+REF[b]:'')+': altura '+f(s[0],'mm')+' · fuerza '+f(s[1],'N',1)+' · R. mec '+f(s[2],'MPa',1));if(!isFinite(r))r=(s[2]||s[1]||s[0]).m}return ex.length?{r,ex}:NaN}
+function duUpd(){if(calc&&calc.duo){(S.dr=S.dr||{})[calc.id]={DU:DU,REF:REF};save()}DU.forEach((a,g)=>{const x=stat(a),e=document.getElementById('du'+g);if(e)e.innerHTML=x?'<b>'+fmt(x.m,2)+'</b>'+(g%3?' <span>±'+fmt(x.sd,2)+'</span>':''):'—'})}
 function dus(g,i,v){DU[g][i]=v;duUpd()}
-function duoHTML(){const h=S.hist[calc.id]||[],col=(g,t)=>`<div><b>${t}</b>${[0,1,2,3].map(i=>`<input inputmode="decimal" placeholder="Pieza ${i+1}" value="${DU[g][i]}" oninput="dus(${g},${i},this.value)">`).join('')}<div class="res" style="font-size:20px" id="du${g}">—</div></div>`;
- return `<button class="back" onclick="back()">‹ Mediciones</button><h1>${calc.n}</h1><div class="card"><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">${col(0,'Fuerza (N)')}${col(1,'R. mec (MPa)')}</div><div class="row" style="margin-top:12px"><button class="g" onclick="duInit();render()">Limpiar</button><button class="b" onclick="sv()">Guardar</button></div></div><h2>Historial</h2>${h.length?h.slice().reverse().slice(0,30).map(x=>`<div class="h"><span class="f">${x.d}</span>${(x.ex||[]).map(l=>'<br>'+l).join('')}</div>`).join(''):'<p class="f">Sin registros todavía.</p>'}`}
-function open_(id){calc=CALCS.find(c=>c.id===id);const d0=(S.dr||{})[id];if(calc.tbl){tbInit();TC=0;if(d0&&d0.TB){TB=d0.TB;TC=d0.TC||0}}if(calc.duo){duInit();if(d0&&d0.DU)DU=d0.DU}const q=history.state||{};history[q.c?'replaceState':'pushState']({tab:'med',c:id},'');render();if(d0&&!calc.tbl&&!calc.duo){calc.f.forEach(f=>{const e=document.getElementById('i-'+f[0]);if(!f[3]&&e&&d0[f[0]]!==undefined)e.value=d0[f[0]]});upd()}}
+function dur(b,v){REF[b]=v;duUpd()}
+function duoHTML(){const h=S.hist[calc.id]||[],blk=b=>`<div class="card" style="padding:10px;margin-bottom:8px"><input id="rf${b}" placeholder="Referencia del producto · cuadro ${b+1}" value="${REF[b].replace(/"/g,'&quot;')}" oninput="dur(${b},this.value)" style="font-size:15px;font-weight:600;padding:8px;margin:0 0 6px"><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">${[['Altura (mm)',0],['Fuerza (N)',1],['R. mec (MPa)',2]].map(([t,c])=>{const g=b*3+c;return `<div><b style="font-size:12px">${t}</b>${[0,1,2,3].map(i=>`<input id="d${g}_${i}" inputmode="decimal" placeholder="${i+1}" value="${DU[g][i]}" oninput="dus(${g},${i},this.value)" style="padding:6px;font-size:15px;margin:2px 0">`).join('')}<div class="f" id="du${g}" style="font-size:13px;min-height:20px">—</div></div>`}).join('')}</div></div>`;
+ return `<button class="back" onclick="back()">‹ Mediciones</button><h1>${calc.n}</h1>${[0,1,2,3].map(blk).join('')}<div class="row" style="margin:4px 0 8px"><button class="g" onclick="duInit();render()">Limpiar</button><button class="b" onclick="sv()">Guardar</button></div><h2>Historial</h2>${h.length?h.slice().reverse().slice(0,30).map(x=>`<div class="h"><span class="f">${x.d}</span>${(x.ex||[]).map(l=>'<br>'+l).join('')}</div>`).join(''):'<p class="f">Sin registros todavía.</p>'}`}
+function open_(id){calc=CALCS.find(c=>c.id===id);const d0=(S.dr||{})[id];if(calc.tbl){tbInit();TC=0;if(d0&&d0.TB){TB=d0.TB;TC=d0.TC||0}}if(calc.duo){duInit();if(d0&&d0.DU&&d0.DU.length===12){DU=d0.DU;REF=d0.REF||REF}}const q=history.state||{};history[q.c?'replaceState':'pushState']({tab:'med',c:id},'');render();if(d0&&!calc.tbl&&!calc.duo){calc.f.forEach(f=>{const e=document.getElementById('i-'+f[0]);if(!f[3]&&e&&d0[f[0]]!==undefined)e.value=d0[f[0]]});upd()}}
 function vals(){const v={};calc.f.forEach(([k])=>v[k]=parseFloat(String(document.getElementById('i-'+k).value).replace(',','.')));return v}
 function calcHTML(){if(calc.tbl)return tblHTML();if(calc.duo)return duoHTML();const h=S.hist[calc.id]||[];
  return `<button class="back" onclick="back()">‹ Mediciones</button><h1>${calc.n}</h1><div class="card">${calc.f.map(([k,l,d,fx])=>`<label>${l}${fx?' · fija':''}${/^t\d$/.test(k)?`<b id="p-${k}" style="float:right;font-size:17px;color:var(--ac)"></b>`:''}<input id="i-${k}" inputmode="decimal" oninput="upd()" ${fx?'readonly tabindex="-1" style="opacity:.6"':''} value="${d!==undefined?String(d).replace('.',','):''}"></label>`).join('')}<div class="f">${calc.fo}</div>${calc.id==='gra'?'<div id="ex" style="margin:8px 0"></div><div class="f" id="rs">—</div>':'<div class="res" id="rs">—</div><div class="f" id="ex"></div>'}<div class="row" style="margin-top:10px"><button class="g" onclick="render()">Limpiar</button><button class="b" onclick="sv()">Guardar</button></div></div><h2>Historial</h2>${h.length?h.slice().reverse().slice(0,30).map(x=>hi(x)).join(''):'<p class="f">Sin registros todavía.</p>'}`}
@@ -207,7 +208,7 @@ const mm=l=>l[0]==='>'?'mayor a '+l.slice(1):l[0]==='<'?'menor a '+l.slice(1):l.
 const lab=k=>{if(calc.id==='gra'&&/^t\d$/.test(k)){const i=+k[1];return 'Tamiz '+(i+1)+', '+mm(MA[i])+' micrones'}return calc.f.find(x=>x[0]===k)[1].replace(/\s*\(.*?\)/g,'')};
 function resText(){if(tab!=='med'||!calc)return null;
  if(calc.id==='gra'){const o=R(calc.c(vals())),a=o.rows.filter(x=>isFinite(x[1])).map(x=>'Tamiz '+(x[2]+1)+', '+mm(x[0])+': '+spk(fmt(x[1],2))+' por ciento');return a.length?a.join('. ')+'. Total retenido '+spk(fmt(o.r,2))+' por ciento.':null}
- if(calc.duo){const a=[0,1].map(g=>{const e=$('du'+g);return e&&e.textContent!=='—'?(g?'R mec: ':'Fuerza: ')+spk(e.innerText.replace(/\n/g,', ').replace('Desv. std','desviación estándar')):''}).filter(Boolean);return a.length?a.join('. ')+'.':null}
+ if(calc.duo){const a=[];for(let b=0;b<4;b++){const q=[0,1,2].map(c=>stat(DU[b*3+c]));if(!q.some(Boolean))continue;const f=(n,x,d)=>x?n+' media '+spk(fmt(x.m,2))+(d&&isFinite(x.sd)?', desviación estándar '+spk(fmt(x.sd,2)):''):'';a.push('Cuadro '+(b+1)+(REF[b]?', '+REF[b]:'')+': '+[f('altura',q[0]),f('fuerza',q[1],1),f('R mec',q[2],1)].filter(Boolean).join('; '))}return a.length?a.join('. ')+'.':null}
  if(calc.tbl){const a=tvals().map((x,i)=>isFinite(x)?'Pieza '+(i+1)+': '+spk(fmt(x,2))+' por ciento':null).filter(Boolean);return a.length?a.join('. ')+'.':null}
  const r=$('rs');if(!r||r.textContent==='—')return null;const ex=$('ex').innerText.trim().replace(/\n+/g,'. ');return 'El resultado es '+spk(r.textContent)+'.'+(ex?' '+spk(ex)+'.':'')}
 /* ---------- carga de valores ---------- */
@@ -227,7 +228,7 @@ const done=()=>calc.f.every(x=>$('i-'+x[0]).value!=='');
 const nxt=()=>calc.f.find(x=>!$('i-'+x[0]).value);
 const gp=()=>{if(calc.id!=='gra'||!lf||!/^t\d$/.test(lf))return '';const r=R(calc.c(vals())).rows[+lf[1]];return r&&isFinite(r[1])?' '+fmtN(fmt(r[1],2))+' por ciento.':''};
 const ack=v=>{if(done())return v+'.'+gp()+' Datos completos. '+(resText()||'');const e=nxt();return v+'.'+gp()+' Siguiente: '+lab(e[0])+'.'};
-function intro(){if(calc.rowwise){const fl=TB.flat().findIndex(x=>x==='');return fl<0?'Ya están todos los datos.':'Rechazo '+((fl>>1)+1)+'. '+(fl&1?'Peso del rechazo.':'Densidad.')}if(calc.tbl)return 'Cargamos '+tcn()+', hacia abajo. Pieza '+((nrow(TC)<0?TB.length:nrow(TC))+1)+'. Al terminar la columna decí listo.';if(calc.duo)return 'Fuerza, pieza 1.';const e=nxt();return e?'Primer dato: '+lab(e[0])+'.':'Ya están todos los datos.'}
+function intro(){if(calc.rowwise){const fl=TB.flat().findIndex(x=>x==='');return fl<0?'Ya están todos los datos.':'Rechazo '+((fl>>1)+1)+'. '+(fl&1?'Peso del rechazo.':'Densidad.')}if(calc.tbl)return 'Cargamos '+tcn()+', hacia abajo. Pieza '+((nrow(TC)<0?TB.length:nrow(TC))+1)+'. Al terminar la columna decí listo.';if(calc.duo)return 'Cuadro '+(CB+1)+', altura, pieza 1. Podés decir referencia para anotar el producto.';const e=nxt();return e?'Primer dato: '+lab(e[0])+'.':'Ya están todos los datos.'}
 function setStd(t,nums,del){
  const rel=/\b(mas|suma|sumale|sumar)\b/.test(t)?1:/\b(menos|resta|restale|restar)\b/.test(t)?-1:0;
  const chg=del||rel||/\b(cambia|cambialo|cambiar|corregi|corregir|modifica|ese|eso|esa)\b/.test(t);
@@ -264,23 +265,33 @@ function fillT(t,nums){
  upd();const nr=nrow(c);
  if(calc.rowwise){const rv=tvals()[r],fl=TB.flat().findIndex(x=>x==='');say(fmtN(v)+'.'+(c===1&&isFinite(rv)?' Resultado rechazo '+(r+1)+': '+fmtN(fmt(rv,2))+' por ciento.':'')+(fl<0?' Datos completos.':' Siguiente: '+(fl&1?'peso del rechazo':'densidad')+', rechazo '+((fl>>1)+1)+'.'));return}
  say(fmtN(v)+'. '+(c===1&&nr<0?'Tabla completa. '+(resText()||''):'Pieza '+((nr<0?TB.length:nr)+1)+'.'))}
+const DC=['altura','fuerza','R mec'];
+function dnext(){for(let b=CB;b<4;b++)for(let c=0;c<3;c++){const i=DU[b*3+c].findIndex(x=>x==='');if(i>=0)return[b,c,i]}return null}
 function fillD(t,nums){
- const g=/fuerza|newton/.test(t)?0:/resisten|mecanic|\br\b|mpa|rmec|erre/.test(t)?1:(DU[0].some(x=>x==='')?0:1);
+ const cm=t.match(/\b(?:cuadro|bloque)\s+(\d)\b/);if(cm){const k=nums.indexOf(cm[1]);if(k>=0)nums.splice(k,1);if(+cm[1]<1||+cm[1]>4){say('Los cuadros van de 1 a 4.');return}CB=+cm[1]-1}
  const pm=t.match(/pieza (\d+)/);if(pm){const i=nums.indexOf(pm[1]);if(i>=0)nums.splice(i,1)}
  let v=oneVal(nums);if(v===undefined){say('No escuché ningún número.');return}if(v===false){say('Escuché varios números. Decime un solo dato por vez.');return}
- if(g===0&&/^\d{1,2}\.\d{3}$/.test(v))v=v.replace('.','');
- const i=pm?+pm[1]-1:DU[g].findIndex(x=>x==='');
- if(i<0||i>3){say(pm?'Las piezas van de 1 a 4.':'No quedan huecos libres, usá "pieza" y el número para cambiar uno.');return}
- const old=DU[g][i],id=calc.id;UN.push(()=>{if(calc&&calc.id===id){DU[g][i]=old;const e=inp('#m input')[g*4+i];if(e)e.value=old;duUpd()}});
- DU[g][i]=fmtN(v);const e=inp('#m input')[g*4+i];if(e)e.value=fmtN(v);
- duUpd();const all=DU[0].every(x=>x!=='')&&DU[1].every(x=>x!==''),ng=DU[g].findIndex(x=>x==='')>=0?g:1-g,ni=DU[ng].findIndex(x=>x==='');
- say(fmtN(v)+'. '+(all?'Datos completos. '+(resText()||''):'Siguiente: '+(ng?'R mec':'fuerza')+' pieza '+(ni+1)+'.'))}
+ const c=/altura/.test(t)?0:/fuerza|newton/.test(t)?1:/resisten|mecanic|\br\b|mpa|rmec|erre/.test(t)?2:null;
+ let b=CB,cc,i;
+ if(c===null&&!pm){const n=dnext();if(!n){say('Los cuadros desde este en adelante están completos. Decí cuadro y un número para cambiar de cuadro, o listo.');return}[b,cc,i]=n}
+ else{cc=c!==null?c:[0,1,2].find(x=>DU[b*3+x].some(y=>y===''));if(cc===undefined)cc=1;i=pm?+pm[1]-1:DU[b*3+cc].findIndex(x=>x==='')}
+ if(cc===1&&/^\d{1,2}\.\d{3}$/.test(v))v=v.replace('.','');
+ if(i<0||i>3){say(pm?'Las piezas van de 1 a 4.':'Esa columna ya está completa. Usá "pieza" y el número para cambiar uno.');return}
+ const g=b*3+cc,old=DU[g][i],id=calc.id;CB=b;
+ UN.push(()=>{if(calc&&calc.id===id){DU[g][i]=old;const e=$('d'+g+'_'+i);if(e)e.value=old;duUpd()}});
+ DU[g][i]=fmtN(v);const e=$('d'+g+'_'+i);if(e)e.value=fmtN(v);duUpd();
+ const n=dnext();let msg;
+ if(!n)msg='Datos completos. '+(resText()||'');
+ else{const full=DU.slice(b*3,b*3+3).every(a=>a.every(x=>x!==''));msg=(full?'Cuadro '+(b+1)+' completo. ':'')+'Siguiente: '+(n[0]!==b?'cuadro '+(n[0]+1)+', ':'')+DC[n[1]]+' pieza '+(n[2]+1)+'.'}
+ say(fmtN(v)+'. '+msg)}
 function read(){const x=resText();say(tab!=='med'||!calc?'No hay ninguna medición abierta.':x||'Todavía faltan datos para calcular.')}
 /* ---------- intérprete ---------- */
 const NAV=[[/redond/,'dar'],[/rectang/,'dre'],[/absorc|\ba\.?a\b/,'abs'],[/granul/,'gra'],[/resisten|mecanic/,'mec'],[/contrac/,'con'],[/rechazo|barbotina/,'rec'],[/atomiz/,'ata'],[/humedad/,'hum']];
 function handle(raw){setSt('thinking');$('vt').textContent=raw;const t=norm(raw),nums=(t.match(/\d+(?:#\d+)?/g)||[]).map(x=>x.replace('#','.'));
  if(pend){const p=pend;pend=null;if(/\b(si|dale|confirmo|ok|adelante|claro|seguro)\b/.test(t))p();else say('Cancelado.');return}
  if(/\b(terminar|termina|terminemos|chau|adios|desactivar|apagar|apaga|fin|basta)\b/.test(t)){say('Hasta luego.',off);return}
+ if(tab==='med'&&calc&&calc.duo&&/\breferencia\b/.test(t)){const rf=raw.replace(/^.*?referencia\s*/i,'').replace(/^(del producto|del cuadro \d+|:)\s*/i,'').trim();if(!rf){say('¿Qué referencia anoto en el cuadro '+(CB+1)+'?');return}REF[CB]=rf;const e=$('rf'+CB);if(e)e.value=rf;duUpd();say('Referencia del cuadro '+(CB+1)+': '+rf+'.');return}
+ if(tab==='med'&&calc&&calc.duo&&nums.length===1&&/\b(cuadro|bloque)\s+\d\b/.test(t)&&!/altura|fuerza|resisten|mecanic|\br\b|mpa|rmec|pieza/.test(t)){if(+nums[0]<1||+nums[0]>4){say('Los cuadros van de 1 a 4.');return}CB=+nums[0]-1;const n=dnext();say('Cuadro '+nums[0]+'.'+(n?' '+DC[n[1]]+', pieza '+(n[2]+1)+'.':' Ya está completo.'));return}
  if(!nums.length&&UN.length&&/\b(no|mal|error|me equivoque|corregi)\b/.test(t)){UN.pop()();say('Anulado. Decime de nuevo el dato.');return}
  if(!nums.length&&/\b(listo|termine|ya esta|eso es todo|ya termine)\b/.test(t)){if(tab==='med'&&calc&&calc.tbl&&TC===0&&!calc.rowwise&&TB.some(r=>r[0]!=='')){TC=1;const nr=nrow(1);if(nr>=0){say('Ahora '+tcn()+'. Pieza '+(nr+1)+'.');return}}read();return}
  if(/deshac|anterior|volve|atras/.test(t)&&!nums.length){const f=UN.pop();if(f){f();say('Listo, volví al valor anterior.')}else say('No hay nada que deshacer.');return}
