@@ -49,6 +49,12 @@ input,textarea{width:100%;font:17px system-ui;padding:10px;border:1px solid var(
 #vs{font-weight:600;font-size:14px}#vt{color:var(--mu);font-size:14px;min-height:18px;margin-top:2px}#vr{font-size:15px;margin:4px 0 8px;min-height:18px}
 #vx{background:#dc2626;color:#fff;border:0;border-radius:10px;padding:9px 18px;font:600 15px system-ui}
 .gv{font-size:22px;font-weight:700;color:var(--ac)}
+#vp{position:static;flex:none;border:0;border-top:1px solid var(--bd);border-radius:0;box-shadow:none;padding:8px 12px;grid-template-columns:40px 1fr auto;column-gap:10px;align-items:center;text-align:left}
+#vo{width:34px;height:34px;margin:0;grid-row:1/4;grid-column:1}
+#vs,#vt,#vr{grid-column:2;margin:0;min-height:0}
+#vs{font-size:12px;color:var(--mu)}#vt{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#vr{font-size:14px;font-weight:600;max-height:2.8em;overflow:hidden}
+#vx{grid-column:3;grid-row:1/4;padding:8px 12px;font-size:14px}
+@keyframes vl{0%{box-shadow:0 0 0 0 rgba(16,185,129,.6)}100%{box-shadow:0 0 0 12px rgba(16,185,129,0)}}
 </style></head><body>
 <main id="m"></main>
 <nav><button id="t-cal" onclick="go('cal')"><span>📅</span>Calendario</button><button id="t-med" onclick="go('med')"><span>🧪</span>Mediciones</button></nav>
@@ -148,7 +154,7 @@ const $=id=>document.getElementById(id);
 let on=false,st='idle',rec=null,pend=null,last='',lf=null,UN=[],wl=null;
 const fab=document.createElement('button');fab.id='vf';fab.textContent='🎙️';fab.setAttribute('aria-label','Asistente de voz');
 const pn=document.createElement('div');pn.id='vp';pn.innerHTML='<div id="vo"></div><div id="vs"></div><div id="vt"></div><div id="vr"></div><button id="vx">Terminar</button>';
-document.body.append(fab,pn);
+document.body.append(fab);document.body.insertBefore(pn,document.querySelector('nav'));
 function setSt(s,m){st=s;pn.className='v-'+s;$('vs').textContent=m||({listening:'Escuchando…',thinking:'Procesando…',speaking:'Respondiendo (tocá el círculo para interrumpir)',idle:'Asistente apagado'})[s]}
 function stopRec(){try{rec&&rec.abort()}catch(e){}}
 function off(){on=false;stopRec();try{TTS&&TTS.cancel()}catch(e){}try{wl&&wl.release()}catch(e){}wl=null;pn.style.display='none';fab.classList.remove('on');setSt('idle')}
@@ -165,8 +171,8 @@ function mk(){rec=new SR();rec.lang='es-AR';rec.interimResults=true;rec.continuo
  rec.onstart=()=>{if(bp){bp=false;beep()}};
  rec.onend=()=>{if(on&&st==='listening')setTimeout(listen,150)}}
 function listen(){if(!on)return;setSt('listening');if(!rec)mk();try{rec.start()}catch(e){}}
-async function start(){if(!SR){pn.style.display='block';fail('Este navegador no permite reconocimiento de voz. Abrí la app en Chrome para Android.');return}
- on=true;UN=[];pend=null;pn.style.display='block';$('vx').textContent='Terminar';$('vt').textContent='';fab.classList.add('on');
+async function start(){if(!SR){pn.style.display='grid';fail('Este navegador no permite reconocimiento de voz. Abrí la app en Chrome para Android.');return}
+ on=true;UN=[];pend=null;pn.style.display='grid';$('vx').textContent='Terminar';$('vt').textContent='';fab.classList.add('on');
  try{wl=await navigator.wakeLock.request('screen')}catch(e){}
  say('Hola, te escucho.')}
 fab.onclick=start;$('vx').onclick=off;$('vo').onclick=()=>{if(st==='speaking')TTS.cancel()};
