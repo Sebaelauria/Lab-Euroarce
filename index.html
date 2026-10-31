@@ -119,11 +119,11 @@ function medHTML(){return `<h1>Mediciones</h1>`+CALCS.map(c=>`<button class="car
 let TB=[],TC=0;const tbInit=()=>{TB=Array.from({length:20},()=>['','']);};
 const pf=s=>parseFloat(String(s).replace(',','.'));
 function tvals(){return TB.map(r=>calc.rf(pf(r[0]),pf(r[1])))}
-function tsum(){const res=tvals().filter(isFinite),n=res.length;if(!n)return NaN;const m=res.reduce((a,b)=>a+b)/n,sd=n>1?Math.sqrt(res.reduce((a,b)=>a+(b-m)*(b-m),0)/(n-1)):NaN;return{r:m,ex:[n+' piezas','Desv. estándar: '+fmt(sd,2),'Mín: '+fmt(Math.min(...res),2)+' · Máx: '+fmt(Math.max(...res),2)]}}
-function rowsUpd(){tvals().forEach((x,i)=>{const e=document.getElementById('r'+i);if(e)e.textContent=isFinite(x)?fmt(x,2):'—'})}
+function tsum(){const res=tvals().filter(isFinite),n=res.length;if(!n)return NaN;const m=res.reduce((a,b)=>a+b)/n,sd=n>1?Math.sqrt(res.reduce((a,b)=>a+(b-m)*(b-m),0)/(n-1)):NaN;return{r:m,ex:[]}}
+function rowsUpd(){tvals().forEach((x,i)=>{const e=document.getElementById('r'+i);if(e)e.textContent=isFinite(x)?fmt(x,2)+' %':'—'})}
 function tbs(i,j,v){TB[i][j]=v;upd()}
 function tblHTML(){const h=S.hist[calc.id]||[];
- return `<button class="back" onclick="back()">‹ Mediciones</button><h1>${calc.n}</h1><div class="card"><div class="f">${calc.fo}</div><table style="width:100%;border-collapse:collapse;margin-top:8px"><tr class="f"><td>#</td><td>${calc.tbl[0]}</td><td>${calc.tbl[1]}</td><td style="text-align:right">Result.</td></tr>${TB.map((r,i)=>`<tr><td class="f">${i+1}</td><td><input inputmode="decimal" value="${r[0]}" oninput="tbs(${i},0,this.value)" style="margin:2px 4px 2px 0;padding:8px"></td><td><input inputmode="decimal" value="${r[1]}" oninput="tbs(${i},1,this.value)" style="margin:2px 4px 2px 0;padding:8px"></td><td id="r${i}" class="f" style="text-align:right">—</td></tr>`).join('')}</table><div class="row" style="margin:10px 0"><button class="g" onclick="TB.push(['','']);render()">+ Pieza</button><button class="g" onclick="tbInit();render()">Limpiar</button></div><div class="res" id="rs">—</div><div class="f" id="ex"></div><div style="margin-top:10px"><button class="b" onclick="sv()">Guardar</button></div></div><h2>Historial</h2>${h.length?h.slice().reverse().slice(0,30).map(x=>hi(x)).join(''):'<p class="f">Sin registros todavía.</p>'}`}
+ return `<button class="back" onclick="back()">‹ Mediciones</button><h1>${calc.n}</h1><div class="card"><div class="f">${calc.fo}</div><table style="width:100%;border-collapse:collapse;margin-top:8px"><tr class="f"><td>#</td><td>${calc.tbl[0]}</td><td>${calc.tbl[1]}</td><td style="text-align:right"><b>Resultado</b></td></tr>${TB.map((r,i)=>`<tr><td class="f">${i+1}</td><td><input inputmode="decimal" value="${r[0]}" oninput="tbs(${i},0,this.value)" style="margin:2px 4px 2px 0;padding:8px"></td><td><input inputmode="decimal" value="${r[1]}" oninput="tbs(${i},1,this.value)" style="margin:2px 4px 2px 0;padding:8px"></td><td id="r${i}" class="gv" style="text-align:right;white-space:nowrap">—</td></tr>`).join('')}</table><div class="row" style="margin:10px 0"><button class="g" onclick="TB.push(['','']);render()">+ Pieza</button><button class="g" onclick="tbInit();render()">Limpiar</button></div><div class="f" id="rs" style="display:none"></div><div class="f" id="ex"></div><div style="margin-top:10px"><button class="b" onclick="sv()">Guardar</button></div></div><h2>Historial</h2>${h.length?h.slice().reverse().slice(0,30).map(x=>hi(x)).join(''):'<p class="f">Sin registros todavía.</p>'}`}
 let DU=[[],[]];const duInit=()=>{DU=[['','','',''],['','','','']]};
 function stat(a){a=a.map(pf).filter(isFinite);const n=a.length;if(!n)return null;const m=a.reduce((p,c)=>p+c)/n;return{m,sd:n>1?Math.sqrt(a.reduce((p,c)=>p+(c-m)*(c-m),0)/(n-1)):NaN,n}}
 function duSum(){const s=[stat(DU[0]),stat(DU[1])];if(!s[0]&&!s[1])return NaN;const L=(t,u,x)=>x?t+': media '+fmt(x.m,2)+' '+u+' · desv. std '+fmt(x.sd,2):null;return{r:(s[1]||s[0]).m,ex:[L('Fuerza','N',s[0]),L('R. mec','MPa',s[1])].filter(Boolean)}}
@@ -135,7 +135,8 @@ function open_(id){calc=CALCS.find(c=>c.id===id);const d0=(S.dr||{})[id];if(calc
 function vals(){const v={};calc.f.forEach(([k])=>v[k]=parseFloat(String(document.getElementById('i-'+k).value).replace(',','.')));return v}
 function calcHTML(){if(calc.tbl)return tblHTML();if(calc.duo)return duoHTML();const h=S.hist[calc.id]||[];
  return `<button class="back" onclick="back()">‹ Mediciones</button><h1>${calc.n}</h1><div class="card">${calc.f.map(([k,l,d,fx])=>`<label>${l}${fx?' · fija':''}${/^t\d$/.test(k)?`<b id="p-${k}" style="float:right;font-size:17px;color:var(--ac)"></b>`:''}<input id="i-${k}" inputmode="decimal" oninput="upd()" ${fx?'readonly tabindex="-1" style="opacity:.6"':''} value="${d!==undefined?String(d).replace('.',','):''}"></label>`).join('')}<div class="f">${calc.fo}</div>${calc.id==='gra'?'<div id="ex" style="margin:8px 0"></div><div class="f" id="rs">—</div>':'<div class="res" id="rs">—</div><div class="f" id="ex"></div>'}<div class="row" style="margin-top:10px"><button class="g" onclick="render()">Limpiar</button><button class="b" onclick="sv()">Guardar</button></div></div><h2>Historial</h2>${h.length?h.slice().reverse().slice(0,30).map(x=>hi(x)).join(''):'<p class="f">Sin registros todavía.</p>'}`}
-function hi(x){if(calc.id==='gra'){const e=x.ex||[],fi=e.filter(l=>/^Finos/.test(l)),sv=e.filter(l=>!/^Finos/.test(l));return `<div class="h"><span class="f">${x.d}</span><br><b>${sv.join(' · ')}</b><br><span class="f">Total retenido: ${fmt(x.r,2)} %${fi.length?' · '+fi[0]:''}</span></div>`}
+function hi(x){if(calc.tbl){const pz=(x.pz||[]).map((v,i)=>'<b>'+(i+1)+':</b> '+fmt(v,2)+' %').join(' · ');return `<div class="h"><span class="f">${x.d}</span><br>${pz||'<span class="f">Sin piezas</span>'}</div>`}
+ if(calc.id==='gra'){const e=x.ex||[],fi=e.filter(l=>/^Finos/.test(l)),sv=e.filter(l=>!/^Finos/.test(l));return `<div class="h"><span class="f">${x.d}</span><br><b>${sv.join(' · ')}</b><br><span class="f">Total retenido: ${fmt(x.r,2)} %${fi.length?' · '+fi[0]:''}</span></div>`}
  return `<div class="h"><b>${fmt(x.r,calc.dec)} ${calc.u}</b> <span class="f">· ${x.d}</span>${(x.ex||[]).length?'<br><span class="f">'+x.ex.join(' · ')+'</span>':''}</div>`}
 function graUpd(o){const ex=document.getElementById('ex'),rs=document.getElementById('rs');
  ex.innerHTML='<table style="width:100%;border-collapse:collapse">'+o.rows.map(([m,p])=>`<tr><td class="f" style="padding:4px 0">${m} µm</td><td class="gv" style="text-align:right">${isFinite(p)?fmt(p,2)+' %':'—'}</td></tr>`).join('')+'</table>';
@@ -143,7 +144,7 @@ function graUpd(o){const ex=document.getElementById('ex'),rs=document.getElement
  o.rows.forEach(([m,p,i])=>{const e=document.getElementById('p-t'+i);if(e)e.textContent=isFinite(p)?fmt(p,2)+' %':''})}
 const R=x=>typeof x==='number'?{r:x,ex:[]}:x;
 function upd(){if(calc.duo)return duUpd();(S.dr=S.dr||{})[calc.id]=calc.tbl?{TB:TB,TC:TC}:Object.fromEntries(calc.f.map(f=>[f[0],document.getElementById('i-'+f[0]).value]));save();const o=R(calc.c(vals()));if(calc.tbl)rowsUpd();if(calc.id==='gra')return graUpd(o);document.getElementById('rs').textContent=isFinite(o.r)?fmt(o.r,calc.dec)+' '+calc.u:'—';document.getElementById('ex').innerHTML=o.ex.map(l=>/^D\. aparente seco/.test(l)?'<div class="sec">'+l+'</div>':l).join('<br>')}
-function sv(){const o=R(calc.c(vals())),r=o.r;if(!isFinite(r))return;(S.hist[calc.id]=S.hist[calc.id]||[]).push({r,ex:o.ex,d:new Date().toLocaleString('es',{dateStyle:'short',timeStyle:'short'})});save();render()}
+function sv(){const o=R(calc.c(vals())),r=o.r;if(!isFinite(r))return;(S.hist[calc.id]=S.hist[calc.id]||[]).push({r,ex:o.ex,pz:calc.tbl?tvals().filter(isFinite):undefined,d:new Date().toLocaleString('es',{dateStyle:'short',timeStyle:'short'})});save();render()}
 history.replaceState({tab:'cal',c:null},'');render();
 </script>
 <script>
@@ -200,6 +201,7 @@ const lab=k=>{if(calc.id==='gra'&&/^t\d$/.test(k)){const i=+k[1];return 'Tamiz '
 function resText(){if(tab!=='med'||!calc)return null;
  if(calc.id==='gra'){const o=R(calc.c(vals())),a=o.rows.filter(x=>isFinite(x[1])).map(x=>'Tamiz '+(x[2]+1)+', '+mm(x[0])+': '+spk(fmt(x[1],2))+' por ciento');return a.length?a.join('. ')+'. Total retenido '+spk(fmt(o.r,2))+' por ciento.':null}
  if(calc.duo){const a=[0,1].map(g=>{const e=$('du'+g);return e&&e.textContent!=='—'?(g?'R mec: ':'Fuerza: ')+spk(e.innerText.replace(/\n/g,', ').replace('Desv. std','desviación estándar')):''}).filter(Boolean);return a.length?a.join('. ')+'.':null}
+ if(calc.tbl){const a=tvals().map((x,i)=>isFinite(x)?'Pieza '+(i+1)+': '+spk(fmt(x,2))+' por ciento':null).filter(Boolean);return a.length?a.join('. ')+'.':null}
  const r=$('rs');if(!r||r.textContent==='—')return null;const ex=$('ex').innerText.trim().replace(/\n+/g,'. ');return 'El resultado es '+spk(r.textContent)+'.'+(ex?' '+spk(ex)+'.':'')}
 /* ---------- carga de valores ---------- */
 const UNITS=/^(gramos?|g|milimetros?|mm|centimetros?|cc|ml|mililitros?|mpa|newtons?|n|por|ciento|porciento|porcentaje|pieza|piezas|medicion|campo)$/;
@@ -252,7 +254,8 @@ function fillT(t,nums){
  const old=TB[r][c],id=calc.id;UN.push(()=>{if(calc&&calc.id===id){TB[r][c]=old;const x=inp('#m table input')[r*2+c];if(x)x.value=old;upd()}});
  TB[r][c]=fmtN(v);const e=inp('#m table input')[r*2+c];if(e){e.value=fmtN(v);e.scrollIntoView({block:'center'})}
  upd();const nr=nrow(c);
- say(fmtN(v)+'. '+(c===1&&nr<0?'Tabla completa. '+(resText()||''):'Pieza '+((nr<0?TB.length:nr)+1)+'.'))}
+ const pr=c===1?tvals()[r]:NaN,pt=isFinite(pr)?' Resultado pieza '+(r+1)+': '+fmtN(fmt(pr,2))+' por ciento.':'';
+ say(fmtN(v)+'.'+pt+' '+(c===1&&nr<0?'Tabla completa.':'Pieza '+((nr<0?TB.length:nr)+1)+'.'))}
 function fillD(t,nums){
  const g=/fuerza|newton/.test(t)?0:/resisten|mecanic|\br\b|mpa|rmec|erre/.test(t)?1:(DU[0].some(x=>x==='')?0:1);
  const pm=t.match(/pieza (\d+)/);if(pm){const i=nums.indexOf(pm[1]);if(i>=0)nums.splice(i,1)}
