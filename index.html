@@ -75,7 +75,7 @@ const CALCS=[
 {id:'mec',n:'Resistencia mecánica',u:'',duo:1,f:[],fo:'',c:()=>duSum()},
 {id:'con',n:'Contracción lineal',u:'% (media)',dec:2,tbl:['D. inicial (mm)','D. final (mm)'],f:[],fo:'CL = (Di − Df) / Di · 100',rf:(a,b)=>(a-b)/a*100,c:()=>tsum()},
 {id:'rec',n:'Rechazo de barbotina',u:'% rechazo',dec:2,f:[['d','Densidad (g/cc)'],['pr','Peso rechazo (g)']],fo:'Gr. barbotina = ρ·100 · %CS = 156,33 − 154,6/ρ · Gr. secos = Gr. barbotina · %CS / 100 · Corrector = Gr. secos / 100 · %Rechazo = rechazo / Gr. secos · 100',c:v=>{if(!isFinite(v.d))return NaN;const g=v.d*100,cs=156.33-154.6/v.d,gs=g*cs/100;return{r:v.pr/gs*100,ex:['Volumen barbotina: 100 mL','Gramos barbotina: '+fmt(g,1)+' g','% C.S: '+fmt(cs,1)+' %','Gramos secos: '+fmt(gs,2)+' g','Corrector: '+fmt(gs/100,3)]}}},
-{id:'ata',n:'Densidad atomizado',u:'g/cc',dec:3,f:[['a','Peso LBG (g)'],['b','Peso atomizado + LBG (g)'],['V','Volumen (cc)',500]],fo:'Dap = (Peso atom+LBG − Peso LBG) / V',c:v=>(v.b-v.a)/v.V},
+{id:'ata',n:'Densidad atomizado',u:'g/cc',dec:3,f:[['a','Peso LBG (g)',141.6,1],['b','Peso atomizado + LBG (g)'],['V','Volumen (cc)',500,1]],fo:'Densidad = ((Peso atomizado + LBG) − Peso LBG) / 500 · LBG = 141,6 g y 500 cc son constantes',c:v=>(v.b-141.6)/500},
 {id:'hum',n:'Humedad (agua a agregar)',u:'ml',f:[['hi','% Humedad inicial'],['hf','% Humedad final'],['p','Peso inicial atomizado (g)']],fo:'Agua = Peso inicial · (%Hf − %Hi) / 100',c:v=>{const a=v.p*(v.hf-v.hi)/100;return{r:a,ex:['Peso final atomizado: '+fmt(v.p+a)+' g']}}}
 ];
 let MSG='',S={days:{},ev:{},hist:{}},tab='med',cur=new Date(),calc=null;
@@ -237,7 +237,7 @@ function setStd(t,nums,del){
  else if(od&&calc.f[ORD[od[1]]+(calc.seq?1:0)])k=calc.f[ORD[od[1]]+(calc.seq?1:0)][0];
  else if(sg){const i=calc.f.findIndex(x=>x[0]===lf),e=calc.f[i+1]||nxt();if(e)k=e[0]}
  else if(chg&&lf&&calc.f.some(x=>x[0]===lf))k=lf;
- if(k&&calc.f.find(x=>x[0]===k)[3]){say('La muestra es fija: 200 gramos.');return}
+ if(k&&calc.f.find(x=>x[0]===k)[3]){say('Ese dato es fijo: '+fmtN(calc.f.find(x=>x[0]===k)[2])+'.');return}
  if(del){if(!k){say('¿Qué valor querés borrar?');return}put(k,'');say('Borré '+lab(k)+'.');return}
  if(!nums.length){say('No escuché ningún número.');return}
  if(nums.length>1){if(nums.every(x=>!x.includes('.')))nums=[nums[0]+'.'+nums.slice(1).join('')];else{say('Escuché varios números. Decime un solo dato por vez.');return}}
