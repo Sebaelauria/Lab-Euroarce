@@ -127,11 +127,11 @@ function tblHTML(){const h=S.hist[calc.id]||[];
 let DU=[[],[]];const duInit=()=>{DU=[['','','',''],['','','','']]};
 function stat(a){a=a.map(pf).filter(isFinite);const n=a.length;if(!n)return null;const m=a.reduce((p,c)=>p+c)/n;return{m,sd:n>1?Math.sqrt(a.reduce((p,c)=>p+(c-m)*(c-m),0)/(n-1)):NaN,n}}
 function duSum(){const s=[stat(DU[0]),stat(DU[1])];if(!s[0]&&!s[1])return NaN;const L=(t,u,x)=>x?t+': media '+fmt(x.m,2)+' '+u+' · desv. std '+fmt(x.sd,2):null;return{r:(s[1]||s[0]).m,ex:[L('Fuerza','N',s[0]),L('R. mec','MPa',s[1])].filter(Boolean)}}
-function duUpd(){[0,1].forEach(g=>{const x=stat(DU[g]),e=document.getElementById('du'+g);if(e)e.innerHTML=x?'<b>Media: '+fmt(x.m,2)+'</b><br>Desv. std: '+fmt(x.sd,2):'—'})}
+function duUpd(){if(calc&&calc.duo){(S.dr=S.dr||{})[calc.id]={DU:DU};save()}[0,1].forEach(g=>{const x=stat(DU[g]),e=document.getElementById('du'+g);if(e)e.innerHTML=x?'<b>Media: '+fmt(x.m,2)+'</b><br>Desv. std: '+fmt(x.sd,2):'—'})}
 function dus(g,i,v){DU[g][i]=v;duUpd()}
 function duoHTML(){const h=S.hist[calc.id]||[],col=(g,t)=>`<div><b>${t}</b>${[0,1,2,3].map(i=>`<input inputmode="decimal" placeholder="Pieza ${i+1}" value="${DU[g][i]}" oninput="dus(${g},${i},this.value)">`).join('')}<div class="res" style="font-size:20px" id="du${g}">—</div></div>`;
  return `<button class="back" onclick="back()">‹ Mediciones</button><h1>${calc.n}</h1><div class="card"><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">${col(0,'Fuerza (N)')}${col(1,'R. mec (MPa)')}</div><div class="row" style="margin-top:12px"><button class="g" onclick="duInit();render()">Limpiar</button><button class="b" onclick="sv()">Guardar</button></div></div><h2>Historial</h2>${h.length?h.slice().reverse().slice(0,30).map(x=>`<div class="h"><span class="f">${x.d}</span>${(x.ex||[]).map(l=>'<br>'+l).join('')}</div>`).join(''):'<p class="f">Sin registros todavía.</p>'}`}
-function open_(id){calc=CALCS.find(c=>c.id===id);if(calc.tbl){tbInit();TC=0}if(calc.duo)duInit();const q=history.state||{};history[q.c?'replaceState':'pushState']({tab:'med',c:id},'');render()}
+function open_(id){calc=CALCS.find(c=>c.id===id);const d0=(S.dr||{})[id];if(calc.tbl){tbInit();TC=0;if(d0&&d0.TB){TB=d0.TB;TC=d0.TC||0}}if(calc.duo){duInit();if(d0&&d0.DU)DU=d0.DU}const q=history.state||{};history[q.c?'replaceState':'pushState']({tab:'med',c:id},'');render();if(d0&&!calc.tbl&&!calc.duo){calc.f.forEach(f=>{const e=document.getElementById('i-'+f[0]);if(!f[3]&&e&&d0[f[0]]!==undefined)e.value=d0[f[0]]});upd()}}
 function vals(){const v={};calc.f.forEach(([k])=>v[k]=parseFloat(String(document.getElementById('i-'+k).value).replace(',','.')));return v}
 function calcHTML(){if(calc.tbl)return tblHTML();if(calc.duo)return duoHTML();const h=S.hist[calc.id]||[];
  return `<button class="back" onclick="back()">‹ Mediciones</button><h1>${calc.n}</h1><div class="card">${calc.f.map(([k,l,d,fx])=>`<label>${l}${fx?' · fija':''}${/^t\d$/.test(k)?`<b id="p-${k}" style="float:right;font-size:17px;color:var(--ac)"></b>`:''}<input id="i-${k}" inputmode="decimal" oninput="upd()" ${fx?'readonly tabindex="-1" style="opacity:.6"':''} value="${d!==undefined?String(d).replace('.',','):''}"></label>`).join('')}<div class="f">${calc.fo}</div>${calc.id==='gra'?'<div id="ex" style="margin:8px 0"></div><div class="f" id="rs">—</div>':'<div class="res" id="rs">—</div><div class="f" id="ex"></div>'}<div class="row" style="margin-top:10px"><button class="g" onclick="render()">Limpiar</button><button class="b" onclick="sv()">Guardar</button></div></div><h2>Historial</h2>${h.length?h.slice().reverse().slice(0,30).map(x=>hi(x)).join(''):'<p class="f">Sin registros todavía.</p>'}`}
@@ -142,7 +142,7 @@ function graUpd(o){const ex=document.getElementById('ex'),rs=document.getElement
  rs.textContent=isFinite(o.r)?'Total retenido: '+fmt(o.r,2)+' % · Finos/pérdida: '+fmt(100-o.r,2)+' %':'—';
  o.rows.forEach(([m,p,i])=>{const e=document.getElementById('p-t'+i);if(e)e.textContent=isFinite(p)?fmt(p,2)+' %':''})}
 const R=x=>typeof x==='number'?{r:x,ex:[]}:x;
-function upd(){if(calc.duo)return duUpd();const o=R(calc.c(vals()));if(calc.tbl)rowsUpd();if(calc.id==='gra')return graUpd(o);document.getElementById('rs').textContent=isFinite(o.r)?fmt(o.r,calc.dec)+' '+calc.u:'—';document.getElementById('ex').innerHTML=o.ex.map(l=>/^D\. aparente seco/.test(l)?'<div class="sec">'+l+'</div>':l).join('<br>')}
+function upd(){if(calc.duo)return duUpd();(S.dr=S.dr||{})[calc.id]=calc.tbl?{TB:TB,TC:TC}:Object.fromEntries(calc.f.map(f=>[f[0],document.getElementById('i-'+f[0]).value]));save();const o=R(calc.c(vals()));if(calc.tbl)rowsUpd();if(calc.id==='gra')return graUpd(o);document.getElementById('rs').textContent=isFinite(o.r)?fmt(o.r,calc.dec)+' '+calc.u:'—';document.getElementById('ex').innerHTML=o.ex.map(l=>/^D\. aparente seco/.test(l)?'<div class="sec">'+l+'</div>':l).join('<br>')}
 function sv(){const o=R(calc.c(vals())),r=o.r;if(!isFinite(r))return;(S.hist[calc.id]=S.hist[calc.id]||[]).push({r,ex:o.ex,d:new Date().toLocaleString('es',{dateStyle:'short',timeStyle:'short'})});save();render()}
 history.replaceState({tab:'cal',c:null},'');render();
 </script>
@@ -218,7 +218,7 @@ const done=()=>calc.f.every(x=>$('i-'+x[0]).value!=='');
 const nxt=()=>calc.f.find(x=>!$('i-'+x[0]).value);
 const gp=()=>{if(calc.id!=='gra'||!lf||!/^t\d$/.test(lf))return '';const r=R(calc.c(vals())).rows[+lf[1]];return r&&isFinite(r[1])?' '+fmtN(fmt(r[1],2))+' por ciento.':''};
 const ack=v=>{if(done())return v+'.'+gp()+' Datos completos. '+(resText()||'');const e=nxt();return v+'.'+gp()+' Siguiente: '+lab(e[0])+'.'};
-function intro(){if(calc.tbl)return 'Cargamos '+tcn()+', hacia abajo. Pieza 1. Al terminar la columna decí listo.';if(calc.duo)return 'Fuerza, pieza 1.';const e=nxt();return e?'Primer dato: '+lab(e[0])+'.':'Ya están todos los datos.'}
+function intro(){if(calc.tbl)return 'Cargamos '+tcn()+', hacia abajo. Pieza '+((nrow(TC)<0?TB.length:nrow(TC))+1)+'. Al terminar la columna decí listo.';if(calc.duo)return 'Fuerza, pieza 1.';const e=nxt();return e?'Primer dato: '+lab(e[0])+'.':'Ya están todos los datos.'}
 function setStd(t,nums,del){
  const rel=/\b(mas|suma|sumale|sumar)\b/.test(t)?1:/\b(menos|resta|restale|restar)\b/.test(t)?-1:0;
  const chg=del||rel||/\b(cambia|cambialo|cambiar|corregi|corregir|modifica|ese|eso|esa)\b/.test(t);
