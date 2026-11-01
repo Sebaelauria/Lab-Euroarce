@@ -73,6 +73,53 @@ h1{letter-spacing:-.3px}
 .mfo{margin:14px 2px 0;text-align:center}
 @keyframes mtin{from{opacity:0;transform:translateY(12px) scale(.94)}to{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){.mt{animation:none}}
+
+.hr{display:flex;gap:8px;align-items:center}.skb{border:1px solid var(--bd);background:var(--sf);border-radius:50%;width:34px;height:34px;font-size:16px;padding:0;color:var(--tx)}
+.mst{display:flex;gap:8px;margin:-4px 2px 12px}.mst span{font:500 12px system-ui;color:var(--mu);background:var(--sf);border:1px solid var(--bd);border-radius:999px;padding:5px 11px}.mst b{color:var(--ac);font-size:14px}
+.sk{display:flex;align-items:center;gap:12px;width:100%;text-align:left;margin-bottom:8px;padding:10px 12px}.sk.on{border:2px solid var(--ac)}.sk .sw{display:flex}.sk .sw i{width:20px;height:20px;border-radius:50%;border:1px solid rgba(128,128,128,.4);margin-right:-6px}
+/* NOCHE */
+[data-skin=noche]{--bg:#0b1210;--sf:#131f1a;--tx:#e8f5ee;--mu:#8aa396;--bd:#223529;--ac:#34d399;color-scheme:dark}
+[data-skin=noche] body{background:radial-gradient(120% 55% at 50% 0,#0f2f23 0,#0b1210 62%) fixed}
+[data-skin=noche] .mt{background:linear-gradient(160deg,rgba(52,211,153,.16),rgba(19,31,26,.92) 58%);border-color:rgba(52,211,153,.28);box-shadow:0 10px 26px -14px rgba(52,211,153,.7)}
+[data-skin=noche] .mt:active{background:rgba(52,211,153,.22)}[data-skin=noche] .mt i{background:rgba(52,211,153,.18)}[data-skin=noche] .mt em{color:#04120c}
+[data-skin=noche] .mdt{background:rgba(52,211,153,.16)}[data-skin=noche] nav{background:rgba(11,18,16,.82);backdrop-filter:blur(14px);border-color:#223529}
+[data-skin=noche] button.b,[data-skin=noche] #vf{color:#04120c}[data-skin=noche] .mt.lv{box-shadow:0 0 0 1px var(--ac),0 0 22px -4px var(--ac)}
+/* PAPEL */
+[data-skin=papel]{--bg:#faf6ee;--sf:#fffdf8;--tx:#1c1917;--mu:#78716c;--bd:#e6ddcf;--ac:#9a3412}
+[data-skin=papel] h1,[data-skin=papel] h2{font-family:Georgia,'Times New Roman',serif}[data-skin=papel] .mh h1{font-size:32px;font-style:italic}
+[data-skin=papel] .mx{grid-template-columns:1fr;gap:0;counter-reset:n;border-top:2px solid var(--tx)}
+[data-skin=papel] .mt{aspect-ratio:auto;height:50px;flex-direction:row;justify-content:flex-start;align-items:center;gap:12px;border:0;border-bottom:1px solid var(--bd);border-radius:0;background:none;box-shadow:none;padding:6px 4px;counter-increment:n;overflow:visible}
+[data-skin=papel] .mt::before{content:counter(n,decimal-leading-zero);order:0;width:24px;font:italic 14px Georgia,serif;color:var(--mu)}
+[data-skin=papel] .mt i{order:1;width:auto;height:auto;background:none;font-size:19px;filter:grayscale(1)}
+[data-skin=papel] .mt span{order:2;flex:1;display:flex;align-items:baseline;gap:8px}[data-skin=papel] .mt b{font:600 17px Georgia,serif}[data-skin=papel] .mt small{margin:0}
+[data-skin=papel] .mt em{order:3;position:static;background:none;color:var(--ac);border:1px solid var(--ac)}[data-skin=papel] .mt:active{background:#f3ead9}
+[data-skin=papel] .mdt{background:none;border:1px solid var(--tx);color:var(--tx);border-radius:2px}
+[data-skin=papel] .card,[data-skin=papel] button.b,[data-skin=papel] button.g,[data-skin=papel] input,[data-skin=papel] .skb{border-radius:3px}
+[data-skin=papel] nav{border-top:2px solid var(--tx)}[data-skin=papel] nav span{display:none}[data-skin=papel] nav button{text-transform:uppercase;letter-spacing:1.5px;font-size:12px;padding:16px 0}[data-skin=papel] nav button.on{box-shadow:inset 0 3px 0 var(--ac)}
+/* PLANO */
+[data-skin=plano]{--bg:#0a1f3c;--sf:#0e2a4f;--tx:#dbeafe;--mu:#7da2d1;--bd:#1e4577;--ac:#22d3ee;color-scheme:dark;font-family:ui-monospace,Menlo,Consolas,monospace}
+[data-skin=plano] body{background-color:#0a1f3c;background-image:linear-gradient(rgba(34,211,238,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(34,211,238,.08) 1px,transparent 1px);background-size:22px 22px;font-family:ui-monospace,Menlo,Consolas,monospace}
+[data-skin=plano] h1,[data-skin=plano] h2,[data-skin=plano] .mt b,[data-skin=plano] .mt small,[data-skin=plano] .mst span,[data-skin=plano] nav button,[data-skin=plano] button,[data-skin=plano] input{font-family:ui-monospace,Menlo,Consolas,monospace}
+[data-skin=plano] .mh h1{text-transform:uppercase;letter-spacing:1px;font-size:22px}
+[data-skin=plano] .mt{counter-increment:n;border-radius:3px;background:rgba(14,42,79,.72);border:1px solid var(--bd);box-shadow:none}
+[data-skin=plano] .mx{counter-reset:n}[data-skin=plano] .mt::after{content:'A'counter(n);position:absolute;right:8px;bottom:8px;font:10px ui-monospace,monospace;color:var(--ac);opacity:.8}
+[data-skin=plano] .mt::before{content:'';position:absolute;left:5px;bottom:5px;width:9px;height:9px;border-left:2px solid var(--ac);border-bottom:2px solid var(--ac)}
+[data-skin=plano] .mt i{border-radius:2px;background:transparent;border:1px solid var(--ac)}[data-skin=plano] .mt b{font-size:11.5px;text-transform:uppercase;letter-spacing:.3px}
+[data-skin=plano] .mt:active{background:rgba(34,211,238,.2)}[data-skin=plano] .mt em{border-radius:2px;color:#04202a}[data-skin=plano] .mdt{background:none;border:1px solid var(--ac);border-radius:2px}
+[data-skin=plano] .card,[data-skin=plano] button.b,[data-skin=plano] button.g,[data-skin=plano] input,[data-skin=plano] .skb,[data-skin=plano] .mst span{border-radius:3px}[data-skin=plano] button.b,[data-skin=plano] #vf{color:#04202a}
+[data-skin=plano] nav{background:#08182f}[data-skin=plano] nav button{text-transform:uppercase;font-size:11px;letter-spacing:1px}[data-skin=plano] nav button.on{box-shadow:inset 0 3px 0 var(--ac);background:rgba(34,211,238,.08)}
+/* POP */
+[data-skin=pop]{--bg:#fff4d6;--sf:#fff;--tx:#111;--mu:#555;--bd:#111;--ac:#ff5a36}
+[data-skin=pop] body{background-color:#fff4d6;background-image:radial-gradient(rgba(17,17,17,.14) 1.3px,transparent 1.6px);background-size:16px 16px}
+[data-skin=pop] h1{font-weight:900;letter-spacing:-1px}[data-skin=pop] .mh h1{font-size:30px}
+[data-skin=pop] .mt{background:var(--c,#fff);border:2.5px solid #111;border-radius:18px;box-shadow:4px 4px 0 #111}
+[data-skin=pop] .mt:nth-child(9n+1){--c:#ffd166}[data-skin=pop] .mt:nth-child(9n+2){--c:#ff8fab}[data-skin=pop] .mt:nth-child(9n+3){--c:#06d6a0}[data-skin=pop] .mt:nth-child(9n+4){--c:#8ecae6}[data-skin=pop] .mt:nth-child(9n+5){--c:#c8b6ff}[data-skin=pop] .mt:nth-child(9n+6){--c:#ffb703}[data-skin=pop] .mt:nth-child(9n+7){--c:#b9fbc0}[data-skin=pop] .mt:nth-child(9n+8){--c:#ffafcc}[data-skin=pop] .mt:nth-child(9n+9){--c:#a0e7e5}
+[data-skin=pop] .mt:active{transform:translate(3px,3px);box-shadow:1px 1px 0 #111}[data-skin=pop] .mt i{background:#fff;border:2px solid #111;border-radius:13px}[data-skin=pop] .mt b{font-weight:800}[data-skin=pop] .mt small{color:#222}
+[data-skin=pop] .mt em{background:#111;color:#fff}[data-skin=pop] .mt.lv{border-color:#111;outline:3px dashed #ff5a36;outline-offset:2px}[data-skin=pop] .mt.lv small{color:#d6361a}
+[data-skin=pop] .mdt{background:#ffd166;border:2px solid #111;color:#111}[data-skin=pop] .mst span{border:2px solid #111;background:#fff;color:#111}
+[data-skin=pop] .card,[data-skin=pop] button.g,[data-skin=pop] input,[data-skin=pop] .skb{border:2px solid #111}[data-skin=pop] .card{box-shadow:3px 3px 0 #111}[data-skin=pop] button.b{border:2px solid #111;box-shadow:3px 3px 0 #111}
+[data-skin=pop] nav{margin:0 12px 10px;border:2.5px solid #111;border-radius:999px;background:#fff;box-shadow:4px 4px 0 #111;overflow:hidden}[data-skin=pop] nav button{padding:8px 0;color:#111}[data-skin=pop] nav button.on{background:#ffd166;color:#111}
+[data-skin=pop] #vf{border:2.5px solid #111;box-shadow:3px 3px 0 #111}
 </style></head><body>
 <main id="m"></main>
 <nav><button id="t-med" onclick="go('med')"><span>🧪</span>Mediciones</button><button id="t-cal" onclick="go('cal')"><span>📅</span>Calendario</button><button id="t-his" onclick="go('his')"><span>🗂️</span>Historial</button></nav>
@@ -156,7 +203,7 @@ function editDay(k){SD=k;const s=S.days[k]||{},ev=S.ev[k]||[];
 function medHTML(){const IC={dar:'⚪',dre:'⬜',abs:'💧',gra:'🔬',mec:'🔨',con:'📏',rec:'🧪',ata:'🌫️',hum:'💦'},NM={dar:['Dens. redondas','densidad aparente'],dre:['Dens. rectang.','densidad aparente'],abs:['Absorción','de agua'],gra:['Granulometría','por tamices'],mec:['Resistencia','mecánica'],con:['Contracción','lineal'],rec:['Rechazo','de barbotina'],ata:['Atomizado','densidad'],hum:['Humedad','agua a agregar']};
  const live=c=>{const d=(S.dr||{})[c.id];if(!d)return false;if(d.TB)return d.TB.some(r=>r.some(Boolean));if(d.DU)return d.DU.some(x=>x.some(Boolean));return(c.f||[]).some(f=>!f[3]&&d[f[0]]!==undefined&&d[f[0]]!==''&&d[f[0]]!==(f[2]!==undefined?String(f[2]).replace('.',','):''))};
  const dt=new Date().toLocaleDateString('es',{weekday:'short',day:'numeric',month:'short'});
- return `<div class="mh"><div><div class="f">Laboratorio</div><h1>Lab Euroarce</h1></div><div class="mdt">${dt}</div></div><div class="mx">`+CALCS.map((c,i)=>{const n=(S.hist[c.id]||[]).length,nm=NM[c.id]||[c.n,''],lv=live(c);return `<button class="mt ${lv?'lv':''}" style="animation-delay:${i*45}ms" onclick="open_('${c.id}')"><i>${IC[c.id]||'🧪'}</i>${n?`<em>${n}</em>`:''}<span><b>${nm[0]}</b><small>${lv?'● en curso':nm[1]}</small></span></button>`}).join('')+`</div><p class="f mfo">Tocá una medición, o usá el micrófono 🎙️</p>`}
+ return `<div class="mh"><div><div class="f">Laboratorio</div><h1>Lab Euroarce</h1></div><div class="hr">${skb()}<div class="mdt">${dt}</div></div></div><div class="mst"><span><b>${CALCS.reduce((a,c)=>a+(S.hist[c.id]||[]).length,0)}</b> registros hoy</span><span><b>${CALCS.filter(live).length}</b> en curso</span></div><div class="mx">`+CALCS.map((c,i)=>{const n=(S.hist[c.id]||[]).length,nm=NM[c.id]||[c.n,''],lv=live(c);return `<button class="mt ${lv?'lv':''}" style="animation-delay:${i*45}ms" onclick="open_('${c.id}')"><i>${IC[c.id]||'🧪'}</i>${n?`<em>${n}</em>`:''}<span><b>${nm[0]}</b><small>${lv?'● en curso':nm[1]}</small></span></button>`}).join('')+`</div><p class="f mfo">Tocá una medición, o usá el micrófono 🎙️</p>`}
 let TB=[],TC=0;const tbInit=()=>{TB=Array.from({length:(calc&&calc.rows)||20},()=>['','']);};
 const pf=s=>parseFloat(String(s).replace(',','.'));
 function tvals(){return TB.map(r=>calc.rf(pf(r[0]),pf(r[1])))}
@@ -246,7 +293,15 @@ function hisJump(v){if(!v)return;if(dayHas(v)){HSEL=v;HM=''}else HM='Sin registr
 function hisHTML(){const t=todayK(),ks=new Set(Object.keys(S.arch).filter(dayHas));if(dayHas(t))ks.add(t);const days=[...ks].sort().reverse();
  if(HSEL){const D=dayData(HSEL),ids=Object.keys(D).filter(id=>D[id].length),tot=ids.reduce((a,id)=>a+D[id].length,0);
   return `<button class="back" onclick="HSEL=null;render()">‹ Historial</button><h1 style="font-size:22px">${fmtDay(HSEL)}</h1><p class="f" style="margin:0 0 10px">${tot} ${tot===1?'registro':'registros'}</p>`+(ids.map(id=>{const c=CALCS.find(x=>x.id===id)||{id,n:id,u:''};return `<div class="card"><b>${c.n}</b>${D[id].slice().reverse().map(e=>hisItem(c,e)).join('')}</div>`}).join('')||'<p class="f">Sin registros.</p>')}
- return `<div class="mh"><div><div class="f">Archivo</div><h1>Historial</h1></div></div><label class="f" style="display:flex;justify-content:space-between;align-items:center;margin:0 0 12px">Ir a un día<input type="date" max="${t}" onchange="hisJump(this.value)" style="width:auto;margin:0;padding:8px"></label>${HM?`<p class="f" style="margin:0 0 10px">${HM}</p>`:''}`+(days.length?days.map(k=>{const D=dayData(k),n=Object.values(D).reduce((a,x)=>a+x.length,0),ids=Object.keys(D).filter(id=>D[id].length);return `<button class="card" style="width:100%;text-align:left;display:block" onclick="HSEL='${k}';HM='';render()"><b>${fmtDay(k)}</b><div class="f" style="margin-top:4px">${n} ${n===1?'registro':'registros'} · ${ids.map(id=>(CALCS.find(x=>x.id===id)||{n:id}).n).join(', ')}</div></button>`}).join(''):'<p class="f">Todavía no hay días archivados. Al terminar cada día, lo guardado en Mediciones pasa acá.</p>')}
+ return `<div class="mh"><div><div class="f">Archivo</div><h1>Historial</h1></div>${skb()}</div><label class="f" style="display:flex;justify-content:space-between;align-items:center;margin:0 0 12px">Ir a un día<input type="date" max="${t}" onchange="hisJump(this.value)" style="width:auto;margin:0;padding:8px"></label>${HM?`<p class="f" style="margin:0 0 10px">${HM}</p>`:''}`+(days.length?days.map(k=>{const D=dayData(k),n=Object.values(D).reduce((a,x)=>a+x.length,0),ids=Object.keys(D).filter(id=>D[id].length);return `<button class="card" style="width:100%;text-align:left;display:block" onclick="HSEL='${k}';HM='';render()"><b>${fmtDay(k)}</b><div class="f" style="margin-top:4px">${n} ${n===1?'registro':'registros'} · ${ids.map(id=>(CALCS.find(x=>x.id===id)||{n:id}).n).join(', ')}</div></button>`}).join(''):'<p class="f">Todavía no hay días archivados. Al terminar cada día, lo guardado en Mediciones pasa acá.</p>')}
+
+const SKINS=[['menta','Menta','Blanco y verde, tarjetas suaves',['#ffffff','#16a34a','#ecfdf3']],['noche','Noche','Oscura con brillo verde neón',['#0b1210','#34d399','#131f1a']],['papel','Papel','Editorial: lista numerada, tipografía con serif',['#faf6ee','#9a3412','#1c1917']],['plano','Plano','Plano técnico: grilla, mono y coordenadas',['#0a1f3c','#22d3ee','#0e2a4f']],['pop','Pop','Colorida, bordes gruesos y sombras duras',['#fff4d6','#ff5a36','#ffd166']]];
+const skb=()=>'<button class="skb" onclick="skinOpen()" aria-label="Cambiar aspecto">🎨</button>';
+function applySkin(){const k=S.skin||'menta',sk=SKINS.find(x=>x[0]===k)||SKINS[0];document.documentElement.dataset.skin=sk[0];const m=document.querySelector('meta[name=theme-color]');if(m)m.content=sk[3][0]}
+function setSkin(k){S.skin=k;save();applySkin();const o=document.querySelector('.sheet');if(o)o.remove();render()}
+function skinOpen(){const o=document.createElement('div');o.className='sheet';o.onclick=e=>{if(e.target===o)o.remove()};
+ o.innerHTML='<div><b>Aspecto de la app</b><p class="f" style="margin:4px 0 12px">Tocá uno para probarlo al instante. Podés cambiarlo cuando quieras.</p>'+SKINS.map(x=>`<button class="g sk ${(S.skin||'menta')===x[0]?'on':''}" onclick="setSkin('${x[0]}')"><span class="sw">${x[3].map(c=>`<i style="background:${c}"></i>`).join('')}</span><span><b>${x[1]}</b><br><span class="f">${x[2]}</span></span></button>`).join('')+'</div>';document.body.appendChild(o)}
+applySkin();
 history.replaceState({tab:'med',c:null},'');render();
 </script>
 <script>
