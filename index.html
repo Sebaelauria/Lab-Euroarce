@@ -84,30 +84,6 @@ h1{letter-spacing:-.3px}
 [data-skin=noche] .mt:active{background:rgba(52,211,153,.22)}[data-skin=noche] .mt i{background:rgba(52,211,153,.18)}[data-skin=noche] .mt em{color:#04120c}
 [data-skin=noche] .mdt{background:rgba(52,211,153,.16)}[data-skin=noche] nav{background:rgba(11,18,16,.82);backdrop-filter:blur(14px);border-color:#223529}
 [data-skin=noche] button.b,[data-skin=noche] #vf{color:#04120c}[data-skin=noche] .mt.lv{box-shadow:0 0 0 1px var(--ac),0 0 22px -4px var(--ac)}
-/* PAPEL */
-[data-skin=papel]{--bg:#faf6ee;--sf:#fffdf8;--tx:#1c1917;--mu:#78716c;--bd:#e6ddcf;--ac:#9a3412}
-[data-skin=papel] h1,[data-skin=papel] h2{font-family:Georgia,'Times New Roman',serif}[data-skin=papel] .mh h1{font-size:32px;font-style:italic}
-[data-skin=papel] .mx{grid-template-columns:1fr;gap:0;counter-reset:n;border-top:2px solid var(--tx)}
-[data-skin=papel] .mt{aspect-ratio:auto;height:50px;flex-direction:row;justify-content:flex-start;align-items:center;gap:12px;border:0;border-bottom:1px solid var(--bd);border-radius:0;background:none;box-shadow:none;padding:6px 4px;counter-increment:n;overflow:visible}
-[data-skin=papel] .mt::before{content:counter(n,decimal-leading-zero);order:0;width:24px;font:italic 14px Georgia,serif;color:var(--mu)}
-[data-skin=papel] .mt i{order:1;width:auto;height:auto;background:none;font-size:19px;filter:grayscale(1)}
-[data-skin=papel] .mt span{order:2;flex:1;display:flex;align-items:baseline;gap:8px}[data-skin=papel] .mt b{font:600 17px Georgia,serif}[data-skin=papel] .mt small{margin:0}
-[data-skin=papel] .mt em{order:3;position:static;background:none;color:var(--ac);border:1px solid var(--ac)}[data-skin=papel] .mt:active{background:#f3ead9}
-[data-skin=papel] .mdt{background:none;border:1px solid var(--tx);color:var(--tx);border-radius:2px}
-[data-skin=papel] .card,[data-skin=papel] button.b,[data-skin=papel] button.g,[data-skin=papel] input,[data-skin=papel] .skb{border-radius:3px}
-[data-skin=papel] nav{border-top:2px solid var(--tx)}[data-skin=papel] nav span{display:none}[data-skin=papel] nav button{text-transform:uppercase;letter-spacing:1.5px;font-size:12px;padding:16px 0}[data-skin=papel] nav button.on{box-shadow:inset 0 3px 0 var(--ac)}
-/* PLANO */
-[data-skin=plano]{--bg:#0a1f3c;--sf:#0e2a4f;--tx:#dbeafe;--mu:#7da2d1;--bd:#1e4577;--ac:#22d3ee;color-scheme:dark;font-family:ui-monospace,Menlo,Consolas,monospace}
-[data-skin=plano] body{background-color:#0a1f3c;background-image:linear-gradient(rgba(34,211,238,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(34,211,238,.08) 1px,transparent 1px);background-size:22px 22px;font-family:ui-monospace,Menlo,Consolas,monospace}
-[data-skin=plano] h1,[data-skin=plano] h2,[data-skin=plano] .mt b,[data-skin=plano] .mt small,[data-skin=plano] .mst span,[data-skin=plano] nav button,[data-skin=plano] button,[data-skin=plano] input{font-family:ui-monospace,Menlo,Consolas,monospace}
-[data-skin=plano] .mh h1{text-transform:uppercase;letter-spacing:1px;font-size:22px}
-[data-skin=plano] .mt{counter-increment:n;border-radius:3px;background:rgba(14,42,79,.72);border:1px solid var(--bd);box-shadow:none}
-[data-skin=plano] .mx{counter-reset:n}[data-skin=plano] .mt::after{content:'A'counter(n);position:absolute;right:8px;bottom:8px;font:10px ui-monospace,monospace;color:var(--ac);opacity:.8}
-[data-skin=plano] .mt::before{content:'';position:absolute;left:5px;bottom:5px;width:9px;height:9px;border-left:2px solid var(--ac);border-bottom:2px solid var(--ac)}
-[data-skin=plano] .mt i{border-radius:2px;background:transparent;border:1px solid var(--ac)}[data-skin=plano] .mt b{font-size:11.5px;text-transform:uppercase;letter-spacing:.3px}
-[data-skin=plano] .mt:active{background:rgba(34,211,238,.2)}[data-skin=plano] .mt em{border-radius:2px;color:#04202a}[data-skin=plano] .mdt{background:none;border:1px solid var(--ac);border-radius:2px}
-[data-skin=plano] .card,[data-skin=plano] button.b,[data-skin=plano] button.g,[data-skin=plano] input,[data-skin=plano] .skb,[data-skin=plano] .mst span{border-radius:3px}[data-skin=plano] button.b,[data-skin=plano] #vf{color:#04202a}
-[data-skin=plano] nav{background:#08182f}[data-skin=plano] nav button{text-transform:uppercase;font-size:11px;letter-spacing:1px}[data-skin=plano] nav button.on{box-shadow:inset 0 3px 0 var(--ac);background:rgba(34,211,238,.08)}
 /* POP */
 [data-skin=pop]{--bg:#fff4d6;--sf:#fff;--tx:#111;--mu:#555;--bd:#111;--ac:#ff5a36}
 [data-skin=pop] body{background-color:#fff4d6;background-image:radial-gradient(rgba(17,17,17,.14) 1.3px,transparent 1.6px);background-size:16px 16px}
@@ -293,9 +269,9 @@ function hisJump(v){if(!v)return;if(dayHas(v)){HSEL=v;HM=''}else HM='Sin registr
 function hisHTML(){const t=todayK(),ks=new Set(Object.keys(S.arch).filter(dayHas));if(dayHas(t))ks.add(t);const days=[...ks].sort().reverse();
  if(HSEL){const D=dayData(HSEL),ids=Object.keys(D).filter(id=>D[id].length),tot=ids.reduce((a,id)=>a+D[id].length,0);
   return `<button class="back" onclick="HSEL=null;render()">‹ Historial</button><h1 style="font-size:22px">${fmtDay(HSEL)}</h1><p class="f" style="margin:0 0 10px">${tot} ${tot===1?'registro':'registros'}</p>`+(ids.map(id=>{const c=CALCS.find(x=>x.id===id)||{id,n:id,u:''};return `<div class="card"><b>${c.n}</b>${D[id].slice().reverse().map(e=>hisItem(c,e)).join('')}</div>`}).join('')||'<p class="f">Sin registros.</p>')}
- return `<div class="mh"><div><div class="f">Archivo</div><h1>Historial</h1></div>${skb()}</div><label class="f" style="display:flex;justify-content:space-between;align-items:center;margin:0 0 12px">Ir a un día<input type="date" max="${t}" onchange="hisJump(this.value)" style="width:auto;margin:0;padding:8px"></label>${HM?`<p class="f" style="margin:0 0 10px">${HM}</p>`:''}`+(days.length?days.map(k=>{const D=dayData(k),n=Object.values(D).reduce((a,x)=>a+x.length,0),ids=Object.keys(D).filter(id=>D[id].length);return `<button class="card" style="width:100%;text-align:left;display:block" onclick="HSEL='${k}';HM='';render()"><b>${fmtDay(k)}</b><div class="f" style="margin-top:4px">${n} ${n===1?'registro':'registros'} · ${ids.map(id=>(CALCS.find(x=>x.id===id)||{n:id}).n).join(', ')}</div></button>`}).join(''):'<p class="f">Todavía no hay días archivados. Al terminar cada día, lo guardado en Mediciones pasa acá.</p>')}
+ return `<div class="mh"><div><div class="f">Archivo</div><h1>Historial</h1></div>${skb()}</div><div class="row" style="margin:0 0 12px"><span class="f">Ir a un día</span><button class="g" onclick="const i=document.getElementById('hd');try{i.showPicker()}catch(e){i.focus();i.click()}">📅 Elegir día</button><input id="hd" type="date" max="${t}" onchange="hisJump(this.value)" style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none;margin:0;padding:0;border:0"></div>${HM?`<p class="f" style="margin:0 0 10px">${HM}</p>`:''}`+(days.length?days.map(k=>{const D=dayData(k),n=Object.values(D).reduce((a,x)=>a+x.length,0),ids=Object.keys(D).filter(id=>D[id].length);return `<button class="card" style="width:100%;text-align:left;display:block" onclick="HSEL='${k}';HM='';render()"><b>${fmtDay(k)}</b><div class="f" style="margin-top:4px">${n} ${n===1?'registro':'registros'} · ${ids.map(id=>(CALCS.find(x=>x.id===id)||{n:id}).n).join(', ')}</div></button>`}).join(''):'<p class="f">Todavía no hay días archivados. Al terminar cada día, lo guardado en Mediciones pasa acá.</p>')}
 
-const SKINS=[['menta','Menta','Blanco y verde, tarjetas suaves',['#ffffff','#16a34a','#ecfdf3']],['noche','Noche','Oscura con brillo verde neón',['#0b1210','#34d399','#131f1a']],['papel','Papel','Editorial: lista numerada, tipografía con serif',['#faf6ee','#9a3412','#1c1917']],['plano','Plano','Plano técnico: grilla, mono y coordenadas',['#0a1f3c','#22d3ee','#0e2a4f']],['pop','Pop','Colorida, bordes gruesos y sombras duras',['#fff4d6','#ff5a36','#ffd166']]];
+const SKINS=[['menta','Menta','Blanco y verde, tarjetas suaves',['#ffffff','#16a34a','#ecfdf3']],['noche','Noche','Oscura con brillo verde neón',['#0b1210','#34d399','#131f1a']],['pop','Pop','Colorida, bordes gruesos y sombras duras',['#fff4d6','#ff5a36','#ffd166']]];
 const skb=()=>'<button class="skb" onclick="skinOpen()" aria-label="Cambiar aspecto">🎨</button>';
 function applySkin(){const k=S.skin||'menta',sk=SKINS.find(x=>x[0]===k)||SKINS[0];document.documentElement.dataset.skin=sk[0];const m=document.querySelector('meta[name=theme-color]');if(m)m.content=sk[3][0]}
 function setSkin(k){S.skin=k;save();applySkin();const o=document.querySelector('.sheet');if(o)o.remove();render()}
