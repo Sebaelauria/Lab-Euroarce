@@ -75,7 +75,7 @@ h1{letter-spacing:-.3px}
 @media(prefers-reduced-motion:reduce){.mt{animation:none}}
 </style></head><body>
 <main id="m"></main>
-<nav><button id="t-med" onclick="go('med')"><span>🧪</span>Mediciones</button><button id="t-cal" onclick="go('cal')"><span>📅</span>Calendario</button></nav>
+<nav><button id="t-med" onclick="go('med')"><span>🧪</span>Mediciones</button><button id="t-cal" onclick="go('cal')"><span>📅</span>Calendario</button><button id="t-his" onclick="go('his')"><span>🗂️</span>Historial</button></nav>
 <script>
 const SH={M:['Mañana','var(--M)'],T:['Tarde','var(--T)'],N:['Noche','var(--N)'],L:['Libre','var(--L)'],P:['Partida','var(--P,#db2777)']};
 function st4(v){const a=[v.a1,v.a2,v.a3,v.a4].filter(isFinite),n=a.length;if(!n)return NaN;const m=a.reduce((p,c)=>p+c)/n,sd=n>1?Math.sqrt(a.reduce((p,c)=>p+(c-m)*(c-m),0)/(n-1)):NaN;return{r:m,ex:['Desv. std: '+fmt(sd,2),n+' piezas']}}
@@ -97,12 +97,12 @@ try{S=Object.assign(S,JSON.parse(localStorage.getItem('app')||'{}'))}catch(e){}
 const save=()=>{try{localStorage.setItem('app',JSON.stringify(S))}catch(e){}};
 const fmt=(n,d)=>isFinite(n)?(d?n.toFixed(d):(Math.round(n*1000)/1000).toString()).replace('.',','):'—';
 const key=(y,m,d)=>y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-function go(t){if(t!==tab)history.pushState({tab:t,c:null},'');tab=t;calc=null;render()}
+function go(t){if(t!==tab)history.pushState({tab:t,c:null},'');tab=t;calc=null;if(t==='his')HSEL=null;render()}
 function back(){if(history.state&&history.state.c)history.back();else go('med')}
 addEventListener('popstate',e=>{const q=e.state||{tab:'med',c:null};if(q.tab==='med'&&!q.c&&!calc&&tab==='med'){history.back();return}tab=q.tab||'med';calc=null;render()});
 function render(){
- ['cal','med'].forEach(x=>document.getElementById('t-'+x).classList.toggle('on',x===tab));
- const m=document.getElementById('m');m.innerHTML=tab==='cal'?calHTML():(calc?calcHTML():medHTML());m.scrollTop=0;if(calc&&tab==='med')upd()}
+ ['cal','med','his'].forEach(x=>document.getElementById('t-'+x).classList.toggle('on',x===tab));
+ const m=document.getElementById('m');m.innerHTML=tab==='cal'?calHTML():tab==='his'?hisHTML():(calc?calcHTML():medHTML());m.scrollTop=0;if(calc&&tab==='med')upd()}
 function calHTML(){
  const y=cur.getFullYear(),mo=cur.getMonth(),first=(new Date(y,mo,1).getDay()+6)%7,n=new Date(y,mo+1,0).getDate(),td=new Date();
  const name=new Date(y,mo,1).toLocaleDateString('es',{month:'long',year:'numeric'});
@@ -194,7 +194,7 @@ function graUpd(o){const ex=document.getElementById('ex'),rs=document.getElement
  o.rows.forEach(([m,p,i])=>{const e=document.getElementById('p-t'+i);if(e)e.textContent=isFinite(p)?fmt(p,2)+' %':''})}
 const R=x=>typeof x==='number'?{r:x,ex:[]}:x;
 function upd(){if(calc.duo)return duUpd();(S.dr=S.dr||{})[calc.id]=calc.tbl?{TB:TB,TC:TC}:Object.fromEntries(calc.f.map(f=>[f[0],document.getElementById('i-'+f[0]).value]));save();const o=R(calc.c(vals()));if(calc.tbl)rowsUpd();if(calc.id==='gra')return graUpd(o);document.getElementById('rs').textContent=isFinite(o.r)?fmt(o.r,calc.dec)+' '+calc.u:'—';document.getElementById('ex').innerHTML=o.ex.map(l=>/^D\. aparente seco/.test(l)?'<div class="sec">'+l+'</div>':l).join('<br>')}
-function sv(){const o=R(calc.c(vals())),r=o.r;if(!isFinite(r))return;(S.hist[calc.id]=S.hist[calc.id]||[]).push({r,ex:o.ex,pz:calc.tbl?tvals().filter(isFinite):undefined,d:new Date().toLocaleString('es',{dateStyle:'short',timeStyle:'short'})});save();render()}
+function sv(){const o=R(calc.c(vals())),r=o.r;if(!isFinite(r))return;(S.hist[calc.id]=S.hist[calc.id]||[]).push({r,ex:o.ex,pz:calc.tbl?tvals().filter(isFinite):undefined,d:new Date().toLocaleString('es',{dateStyle:'short',timeStyle:'short'}),dk:todayK()});save();render()}
 
 S.al=S.al||{on:true,min:30,fe:{M:'',T:'',N:'',P:''}};S.noal=S.noal||{};S.fired=S.fired||{};
 const WK=['M','T','N','P'];
@@ -227,6 +227,26 @@ function alCard(){const now=Date.now(),l=alarmList(14),nx=l.filter(a=>a.a>now&&!
  <p class="f" style="margin:8px 0 2px">Hora de salida por turno (se usa solo si el archivo importado no trae el horario):</p>${f('M','Mañana')}${f('T','Tarde')}${f('N','Noche')}${f('P','Partida')}
  <p class="f" style="margin:8px 0">La app solo puede sonar si está abierta. Para que suene aunque esté cerrada, exportá los avisos y abrilos con tu app de calendario.</p><button class="g" onclick="alIcs()">Exportar avisos (.ics)</button></div>`}
 (()=>{let x0,y0,t0;const m=document.getElementById('m');m.addEventListener('touchstart',e=>{const t=e.touches[0];x0=t.clientX;y0=t.clientY;t0=Date.now()},{passive:true});m.addEventListener('touchend',e=>{if(tab!=='cal'||calc||document.querySelector('.sheet'))return;const t=e.changedTouches[0],dx=t.clientX-x0,dy=t.clientY-y0;if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.5&&Date.now()-t0<700)mv(dx<0?1:-1)},{passive:true})})();
+
+S.arch=S.arch||{};let HSEL=null,HM='';
+function todayK(){const x=new Date();return key(x.getFullYear(),x.getMonth(),x.getDate())}
+function entryDay(e){if(e.dk)return e.dk;const m=(e.d||'').match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);if(m){const y=+m[3]<100?2000+ +m[3]:+m[3];return key(y,+m[2]-1,+m[1])}return todayK()}
+function rollover(){const t=todayK();let mv=false;Object.keys(S.hist).forEach(id=>{const keep=[];(S.hist[id]||[]).forEach(e=>{const k=entryDay(e);if(k<t){((S.arch[k]=S.arch[k]||{})[id]=S.arch[k][id]||[]).push(e);mv=true}else keep.push(e)});S.hist[id]=keep});if(mv)save()}
+let LD=todayK();const dayChk=()=>{if(todayK()!==LD){LD=todayK();rollover();if(!calc)render()}};
+setInterval(dayChk,30000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)dayChk()});rollover();
+const dayData=k=>k===todayK()?S.hist:(S.arch[k]||{});
+const dayHas=k=>Object.values(dayData(k)).some(a=>a.length);
+function fmtDay(k){const [y,m,d]=k.split('-').map(Number),f=new Date(y,m-1,d).toLocaleDateString('es',{weekday:'long',day:'numeric',month:'long',year:'numeric'});return (k===todayK()?'Hoy · ':'')+f.charAt(0).toUpperCase()+f.slice(1)}
+function hisItem(c,e){const hm=(e.d||'').split(', ')[1]||'';
+ if(c.tbl)return `<div class="h"><span class="f">${hm}</span><br>${(e.pz||[]).map((v,i)=>'<b>'+(i+1)+':</b> '+fmt(v,2)+' %').join(' · ')||'—'}</div>`;
+ if(c.duo)return `<div class="h"><span class="f">${hm}</span>${(e.ex||[]).map(l=>'<br>'+l).join('')}</div>`;
+ if(c.id==='gra'){const l=e.ex||[],fi=l.filter(x=>/^Finos/.test(x)),sv=l.filter(x=>!/^Finos/.test(x));return `<div class="h"><span class="f">${hm}</span><br><b>${sv.join(' · ')}</b><br><span class="f">Total retenido: ${fmt(e.r,2)} %${fi.length?' · '+fi[0]:''}</span></div>`}
+ return `<div class="h"><b>${fmt(e.r,c.dec)} ${c.u||''}</b> <span class="f">· ${hm}</span>${(e.ex||[]).length?'<br><span class="f">'+e.ex.join(' · ')+'</span>':''}</div>`}
+function hisJump(v){if(!v)return;if(dayHas(v)){HSEL=v;HM=''}else HM='Sin registros el '+fmtDay(v).replace('Hoy · ','');render()}
+function hisHTML(){const t=todayK(),ks=new Set(Object.keys(S.arch).filter(dayHas));if(dayHas(t))ks.add(t);const days=[...ks].sort().reverse();
+ if(HSEL){const D=dayData(HSEL),ids=Object.keys(D).filter(id=>D[id].length),tot=ids.reduce((a,id)=>a+D[id].length,0);
+  return `<button class="back" onclick="HSEL=null;render()">‹ Historial</button><h1 style="font-size:22px">${fmtDay(HSEL)}</h1><p class="f" style="margin:0 0 10px">${tot} ${tot===1?'registro':'registros'}</p>`+(ids.map(id=>{const c=CALCS.find(x=>x.id===id)||{id,n:id,u:''};return `<div class="card"><b>${c.n}</b>${D[id].slice().reverse().map(e=>hisItem(c,e)).join('')}</div>`}).join('')||'<p class="f">Sin registros.</p>')}
+ return `<div class="mh"><div><div class="f">Archivo</div><h1>Historial</h1></div></div><label class="f" style="display:flex;justify-content:space-between;align-items:center;margin:0 0 12px">Ir a un día<input type="date" max="${t}" onchange="hisJump(this.value)" style="width:auto;margin:0;padding:8px"></label>${HM?`<p class="f" style="margin:0 0 10px">${HM}</p>`:''}`+(days.length?days.map(k=>{const D=dayData(k),n=Object.values(D).reduce((a,x)=>a+x.length,0),ids=Object.keys(D).filter(id=>D[id].length);return `<button class="card" style="width:100%;text-align:left;display:block" onclick="HSEL='${k}';HM='';render()"><b>${fmtDay(k)}</b><div class="f" style="margin-top:4px">${n} ${n===1?'registro':'registros'} · ${ids.map(id=>(CALCS.find(x=>x.id===id)||{n:id}).n).join(', ')}</div></button>`}).join(''):'<p class="f">Todavía no hay días archivados. Al terminar cada día, lo guardado en Mediciones pasa acá.</p>')}
 history.replaceState({tab:'med',c:null},'');render();
 </script>
 <script>
