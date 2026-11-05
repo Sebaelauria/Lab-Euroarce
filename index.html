@@ -112,7 +112,7 @@ const CALCS=[
 {id:'mec',n:'Resistencia mecánica',u:'',duo:1,f:[],fo:'',c:()=>duSum()},
 {id:'con',n:'Contracción lineal',u:'% (media)',dec:2,tbl:['D. inicial (mm)','D. final (mm)'],f:[],fo:'CL = (Di − Df) / Di · 100',rf:(a,b)=>(a-b)/a*100,c:()=>tsum()},
 {id:'rec',n:'Rechazo de barbotina',u:'% rechazo',dec:2,tbl:['Densidad (g/cc)','Peso rechazo (g)'],rows:3,rowwise:1,f:[],fo:'% rechazo = Peso rechazo / (ρ · (156,33 − 154,6 / ρ)) · 100',rf:(d,pr)=>{const cs=156.33-154.6/d;return pr/(d*cs)*100},c:()=>tsum()},
-{id:'ata',n:'Densidad atomizado',u:'g/cc',dec:3,f:[['a','Peso LBG (g)',141.6,1],['b','Peso atomizado + LBG (g)'],['V','Volumen (cc)',500,1]],fo:'Densidad = ((Peso atomizado + LBG) − Peso LBG) / 500 · LBG = 141,6 g y 500 cc son constantes',c:v=>(v.b-141.6)/500},
+{id:'ata',n:'Densidad atomizado',u:'g/cc',dec:3,f:[['fl','Fluidez (tiempo en segundos)'],['b','Peso atomizado + LBG (g)']],fo:'Anotá el peso total (atomizado + LBG): la fórmula ya está incluida · Densidad = (Peso − 141,6) / 500',c:v=>{const r=(v.b-141.6)/500;return isFinite(v.fl)?{r,ex:['Fluidez: '+fmt(v.fl,1)+' s']}:r}},
 {id:'hum',n:'Humedad (agua a agregar)',u:'ml',f:[['hi','% Humedad inicial'],['hf','% Humedad final'],['p','Peso inicial atomizado (g)']],fo:'Agua = Peso inicial · (%Hf − %Hi) / 100',c:v=>{const a=v.p*(v.hf-v.hi)/100;return{r:a,ex:['Peso final atomizado: '+fmt(v.p+a)+' g']}}}
 ];
 let MSG='',S={days:{},ev:{},hist:{}},tab='med',cur=new Date(),calc=null;
